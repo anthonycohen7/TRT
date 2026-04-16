@@ -1,0 +1,3263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>TRT — Trade Reconciliation Tool</title>
+<style>
+:root {
+  --bg:    #080c12;
+  --bg2:   #0d1420;
+  --bg3:   #141e2e;
+  --bg4:   #1c2a3e;
+  --amber: #ffaa00;
+  --green: #00d488;
+  --red:   #ff4455;
+  --blue:  #4da6ff;
+  --purple:#b388ff;
+  --dim:   #3a4f6a;
+  --text:  #b8cfe0;
+  --mono:  'Courier New', Courier, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Trebuchet MS', sans-serif; font-size: 13px; padding-bottom: 40px; }
+
+/* HEADER */
+.header {
+  background: var(--bg2);
+  border-bottom: 2px solid var(--amber);
+  padding: 10px 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+.header-title { color: var(--amber); font-size: 13px; letter-spacing: 4px; font-weight: bold; }
+.header-sub { color: var(--dim); font-size: 10px; letter-spacing: 2px; }
+.header-stat { margin-left: auto; font-size: 10px; color: var(--dim); }
+.header-stat span { color: var(--text); }
+
+/* TABS */
+.tabs { background: var(--bg2); border-bottom: 1px solid var(--dim); display: flex; padding: 0 24px; gap: 0; }
+.tab { padding: 10px 22px; cursor: pointer; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--dim); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; user-select: none; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+
+/* PANELS */
+.panels { padding: 20px 24px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* GRID */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+
+/* LABELS */
+.label { font-size: 10px; color: var(--amber); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; }
+.sublabel { font-size: 10px; color: var(--dim); }
+
+/* INPUTS */
+textarea {
+  background: var(--bg2); border: 1px solid var(--dim); color: var(--text);
+  font-family: var(--mono); font-size: 11px; padding: 10px; width: 100%;
+  resize: vertical; height: 280px; outline: none; transition: border-color 0.2s; line-height: 1.5;
+}
+textarea:focus { border-color: var(--blue); }
+textarea::placeholder { color: var(--dim); }
+input[type=text] {
+  background: var(--bg2); border: 1px solid var(--dim); color: var(--text);
+  font-family: var(--mono); font-size: 11px; padding: 5px 8px; outline: none; width: 100%;
+}
+input[type=text]:focus { border-color: var(--blue); }
+
+/* OUTPUT */
+.output-box {
+  background: var(--bg2); border: 1px solid var(--dim);
+  font-family: var(--mono); font-size: 11px; padding: 12px;
+  min-height: 280px; max-height: 520px; overflow-y: auto;
+  white-space: pre; line-height: 1.6;
+}
+.output-box .P2  { color: var(--green); }
+.output-box .P4  { color: var(--red); }
+.output-box .acc { color: var(--amber); font-weight: bold; }
+.output-box .hdr { color: var(--purple); }
+.output-box .sum { color: var(--blue); }
+.output-box .blk { color: var(--amber); }
+
+/* BUTTONS */
+.btn { background: transparent; border: 1px solid var(--amber); color: var(--amber); padding: 7px 18px; cursor: pointer; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; transition: all 0.15s; }
+.btn:hover { background: var(--amber); color: var(--bg); }
+.btn-blue  { border-color: var(--blue);   color: var(--blue); }
+.btn-blue:hover  { background: var(--blue);  color: var(--bg); }
+.btn-green { border-color: var(--green);  color: var(--green); }
+.btn-green:hover { background: var(--green); color: var(--bg); }
+.btn-red   { border-color: var(--red);    color: var(--red); }
+.btn-red:hover   { background: var(--red);   color: var(--bg); }
+.btn-sm { padding: 4px 10px; font-size: 10px; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* DIVIDER */
+.divider { border: none; border-top: 1px solid var(--dim); margin: 16px 0; }
+
+/* SECTION TITLE */
+.sec-title { font-size: 10px; color: var(--amber); letter-spacing: 3px; text-transform: uppercase; border-bottom: 1px solid var(--dim); padding-bottom: 5px; margin: 16px 0 10px; }
+
+/* TABLES */
+.tbl-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11px; }
+th { background: var(--bg3); color: var(--amber); padding: 6px 10px; text-align: left; font-size: 10px; letter-spacing: 1px; position: sticky; top: 0; z-index: 1; }
+td { padding: 5px 10px; border-bottom: 1px solid var(--bg3); vertical-align: middle; }
+tr:hover td { background: var(--bg3); }
+td.ok  { color: var(--green); }
+td.err { color: var(--red); }
+td.warn{ color: var(--amber); }
+
+.badge { display: inline-block; padding: 2px 7px; font-size: 10px; border-radius: 2px; font-family: var(--mono); }
+.badge-ok   { background: rgba(0,212,136,.12); color: var(--green); border: 1px solid var(--green); }
+.badge-err  { background: rgba(255,68,85,.12);  color: var(--red);   border: 1px solid var(--red); }
+.badge-warn { background: rgba(255,170,0,.12);  color: var(--amber); border: 1px solid var(--amber); }
+.badge-info { background: rgba(77,166,255,.12); color: var(--blue);  border: 1px solid var(--blue); }
+
+/* MAPPING */
+.map-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px; align-items: center; margin: 4px 0; }
+.map-arrow { color: var(--dim); text-align: center; font-size: 12px; }
+
+/* SUMMARY BOX */
+.summary-box { background: var(--bg3); border: 1px solid var(--dim); padding: 10px 14px; display: flex; gap: 24px; flex-wrap: wrap; }
+.summary-stat { font-size: 11px; }
+.summary-stat .val { font-family: var(--mono); font-size: 13px; margin-left: 6px; }
+
+/* STATUS */
+.status-bar { background: var(--bg2); border-top: 1px solid var(--dim); padding: 5px 24px; font-size: 10px; color: var(--dim); display: flex; gap: 20px; position: fixed; bottom: 0; left: 0; right: 0; }
+.status-bar span { color: var(--text); }
+
+/* COPY FLASH */
+@keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.flash { animation: flash 0.4s; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 3px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+
+
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">▸ TRT — TRADE RECONCILIATION TOOL</div>
+    <div class="header-sub">BLOOMBERG IB CHAT · VCON · SEALS RECONCILIATION</div>
+  </div>
+  <div class="header-stat" id="hdr-stats">CHAT: <span id="hdr-accounts">—</span> ACCOUNTS · <span id="hdr-trades">—</span> TRADES</div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('parser')">① CHAT PARSER</div>
+  <div class="tab" onclick="switchTab('vcon')">② VCON CHECK</div>
+  <div class="tab" onclick="switchTab('seals')">③ SEALS CHECK</div>
+  <div class="tab" onclick="switchTab('mapping')">⚙ MAPPING</div>
+  <div class="tab" onclick="switchTab('vconavg')">⑤ VCON AVG</div>
+  <div class="tab" onclick="switchTab('sealsavg')">⑥ SEALS AVG</div>
+  <div class="tab" onclick="switchTab('global')">⑤ RECON GLOBAL</div>
+  <div class="tab" onclick="switchTab('history')">⑥ HISTORIQUE</div>
+</div>
+
+<div class="panels">
+
+<!-- ════════════════════════════════════════════════ TAB 1: CHAT PARSER -->
+<div class="panel active" id="panel-parser">
+  <div class="two-col">
+    <div class="col">
+      <div class="label">Chat Bloomberg IB — coller ici</div>
+      <div class="sublabel">Format: HH:MM:SS SENDER: content</div>
+      <textarea id="chat-input" placeholder="Coller le contenu brut du chat Bloomberg IB ici...&#10;&#10;12:34:56 JOISTEN CARDOZO: ----H71&#10;{P2}+250 VGM6 @ 5461"></textarea>
+      <div class="actions">
+        <button class="btn" onclick="parseChat()">▶ PARSER LE CHAT</button>
+        <button class="btn btn-blue btn-sm" onclick="clearChat()">CLEAR</button>
+        <span class="sublabel" id="parse-status"></span>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">ALL DAY RECAP — sortie</div>
+      <div class="sublabel">Format Bloomberg prêt à coller dans IB</div>
+      <div class="output-box" id="chat-output">En attente du parsing...</div>
+      <div class="actions">
+        <button class="btn btn-blue" onclick="copyOutput()">⊡ COPIER</button>
+        <button class="btn btn-sm" onclick="expandOutput()">FULL VIEW</button>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div class="sec-title">TRADES PARSÉS PAR COMPTE</div>
+  <div id="parsed-table-wrap"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════ TAB 2: VCON CHECK -->
+<div class="panel" id="panel-vcon">
+  <div class="two-col">
+    <div class="col">
+      <div class="label">VCON Export Bloomberg — coller ici</div>
+      <div class="sublabel">Format TSV (copier depuis Bloomberg VCON)</div>
+      <textarea id="vcon-input" placeholder="Coller les données VCON ici...&#10;&#10;BS	Amount	Security	PriceDiscount	Recipient	TradeTime	Status	Firm	CCY	HiddenSenderRecip	DealerNotes	TradeDate	SettleDate	Ticker	..."></textarea>
+      <div class="actions">
+        <button class="btn" onclick="checkVCON()">▶ VÉRIFIER VCONS</button>
+        <button class="btn btn-blue btn-sm" onclick="document.getElementById('vcon-input').value=''">CLEAR</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Résumé</div>
+      <div class="summary-box" id="vcon-summary">
+        <div class="summary-stat">Chargez un chat d'abord, puis collez les VCONs.</div>
+      </div>
+      <div class="label" style="margin-top:10px">Résultats par trader</div>
+      <div id="vcon-results-wrap" class="sublabel">—</div>
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="sec-title">DÉTAIL RÉCONCILIATION VCON</div>
+  <div class="tbl-wrap" id="vcon-detail"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════ TAB 3: SEALS CHECK -->
+<div class="panel" id="panel-seals">
+
+  <!-- ── Mode 1: SEALS vs CHAT ─────────────────────────────────────────── -->
+  <div class="sec-title">① SEALS vs CHAT PARSER</div>
+  <div class="sublabel" style="margin-bottom:10px">Nécessite d'avoir parsé le chat (Tab ①).</div>
+  <div class="two-col">
+    <div class="col">
+      <div class="label">SEALS Export — coller ici</div>
+      <div class="sublabel">Format TSV SEALS</div>
+      <textarea id="seals-input" placeholder="Coller les données SEALS ici...&#10;&#10;Client&#9;Bus State&#9;Exch&#9;B/S&#9;Vol&#9;Prod&#9;Exp&#9;Option&#9;Strike&#9;Unr Price&#9;Giveup Ref 1&#9;..."></textarea>
+      <div class="actions">
+        <button class="btn" onclick="checkSEALS()">▶ SEALS vs CHAT</button>
+        <button class="btn btn-blue btn-sm" onclick="document.getElementById('seals-input').value=''">CLEAR</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Résumé</div>
+      <div class="summary-box" id="seals-summary">
+        <div class="summary-stat">Parsez le chat d'abord, puis collez les données SEALS.</div>
+      </div>
+      <div id="seals-results-wrap" class="sublabel"></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── Mode 2: SEALS vs VCON standalone ──────────────────────────────── -->
+  <div class="sec-title">② SEALS vs VCON — sans chat</div>
+  <div class="sublabel" style="margin-bottom:10px">Coller SEALS et VCON directement ici — aucun chat requis.</div>
+  <div class="two-col">
+    <div class="col">
+      <div class="label">SEALS Export</div>
+      <div class="sublabel">Format TSV SEALS</div>
+      <textarea id="seals-input-2" style="height:200px" placeholder="Coller les données SEALS ici..."></textarea>
+    </div>
+    <div class="col">
+      <div class="label">VCON Bloomberg</div>
+      <div class="sublabel">Format TSV ou screen-copy Bloomberg VCON</div>
+      <textarea id="seals-vcon-input" style="height:200px" placeholder="Coller les VCONs ici..."></textarea>
+    </div>
+  </div>
+  <div class="actions" style="margin-top:10px">
+    <button class="btn" onclick="checkSEALSvsVCONDirect()">▶ COMPARER SEALS vs VCON</button>
+    <button class="btn btn-blue btn-sm" onclick="document.getElementById('seals-input-2').value='';document.getElementById('seals-vcon-input').value='';document.getElementById('seals-vcon-summary').style.display='none'">CLEAR</button>
+  </div>
+  <div class="summary-box" id="seals-vcon-summary" style="margin-top:12px;display:none"></div>
+
+  <hr class="divider">
+  <div class="sec-title">DÉTAIL RÉCONCILIATION</div>
+  <div class="tbl-wrap" id="seals-detail"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════ TAB 4: MAPPING -->
+<div class="panel" id="panel-mapping">
+
+  <div class="sec-title">MAPPING COMPTES CHAT → BASE CLIENT</div>
+  <div class="sublabel" style="margin-bottom:10px">
+    Pour chaque compte détecté dans le chat, sélectionne le client correspondant. 
+    Les règles VCON et SEALS se remplissent automatiquement.
+  </div>
+  <div class="actions" style="margin-bottom:14px;padding:10px;background:var(--bg3);border:1px solid var(--dim);">
+    <span class="label" style="margin:0">MISE À JOUR BASE CLIENT</span>
+    <span class="sublabel">→ Importer le fichier Anco_client_list.xlsx mis à jour</span>
+    <input type="file" id="client-xlsx-input" accept=".xlsx" style="display:none" onchange="importClientXLSX(this)">
+    <button class="btn btn-blue" onclick="document.getElementById('client-xlsx-input').click()">⊕ IMPORTER XLSX</button>
+    <span id="import-status" class="sublabel"></span>
+  </div>
+
+  <div id="mapping-accounts-container"></div>
+
+  <div class="actions" style="margin-top:12px">
+    <button class="btn btn-green btn-sm" onclick="saveMappings()">✓ SAUVEGARDER</button>
+    <button class="btn btn-blue btn-sm" onclick="renderMappingUI()">↺ RAFRAÎCHIR</button>
+  </div>
+
+  <div class="sec-title" style="margin-top:24px">BASE CLIENT — RÈGLES VCON (référence)</div>
+  <div class="sublabel" style="margin-bottom:8px">Recherche rapide dans la base</div>
+  <div style="margin-bottom:8px">
+    <input type="text" id="client-search" placeholder="Rechercher par entity, trader..." 
+      style="width:300px" oninput="filterClientDB()">
+  </div>
+  <div class="tbl-wrap" id="client-db-table" style="max-height:300px;"></div>
+
+  <div class="sec-title" style="margin-top:24px">SEALS → BLOOMBERG TICKER</div>
+  <div id="ticker-map-display" style="font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.8;"></div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════ TAB 5: RECON GLOBAL -->
+<div class="panel" id="panel-global">
+  <div class="sublabel" style="margin-bottom:14px">
+    Colle tous les VCONs et tout le SEALS — comparaison agrégée par produit, sans chat.
+  </div>
+  <div class="two-col">
+    <div class="col">
+      <div class="label">VCON — tous les trades</div>
+      <div class="sublabel">Format TSV Bloomberg VCON</div>
+      <textarea id="global-vcon-input" style="height:220px" placeholder="Coller tous les VCONs ici..."></textarea>
+    </div>
+    <div class="col">
+      <div class="label">SEALS — tous les trades</div>
+      <div class="sublabel">Format TSV SEALS export</div>
+      <textarea id="global-seals-input" style="height:220px" placeholder="Coller tout le SEALS ici..."></textarea>
+    </div>
+  </div>
+
+  <div class="actions" style="margin-top:12px">
+    <button class="btn" onclick="checkGlobal()">▶ COMPARER VCON vs SEALS</button>
+    <button class="btn btn-blue btn-sm" onclick="document.getElementById('global-vcon-input').value='';document.getElementById('global-seals-input').value='';document.getElementById('global-summary').innerHTML='';document.getElementById('global-detail').innerHTML=''">CLEAR</button>
+  </div>
+
+  <hr class="divider">
+
+  <div class="summary-box" id="global-summary" style="margin-bottom:12px"></div>
+
+  <div class="sec-title">DÉTAIL PAR PRODUIT</div>
+  <div class="tbl-wrap" id="global-detail"></div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════ TAB 6: HISTORIQUE -->
+<div class="panel" id="panel-history">
+  <div class="sublabel" style="margin-bottom:14px">
+    Historique automatique des parsings et checks — sauvegardé dans le navigateur.
+  </div>
+
+  <div class="actions" style="margin-bottom:12px">
+    <button class="btn btn-sm" onclick="renderHistory()">↺ RAFRAÎCHIR</button>
+    <button class="btn btn-red btn-sm" onclick="clearHistory()">✕ VIDER L'HISTORIQUE</button>
+    <span class="sublabel" id="history-count"></span>
+  </div>
+
+  <div id="history-container"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════ TAB 5: VCON AVG -->
+<div class="panel" id="panel-vconavg">
+  <div class="sec-title">VCON AVG — MOYENNE PAR TRADER ET PAR PRODUIT</div>
+  <div class="sublabel" style="margin-bottom:12px">Collez les VCONs du jour pour obtenir la moyenne pondérée buy/sell par trader et par produit.</div>
+  <div class="two-col">
+    <div class="col">
+      <div class="label">VCON Export Bloomberg</div>
+      <div class="sublabel">Format TSV Bloomberg VCON</div>
+      <textarea id="vconavg-input" style="height:260px" placeholder="Coller les VCONs ici..."></textarea>
+      <div class="actions" style="margin-top:8px">
+        <button class="btn" onclick="computeVCONAvg()">▶ CALCULER MOYENNES</button>
+        <button class="btn btn-blue btn-sm" onclick="document.getElementById('vconavg-input').value='';document.getElementById('vconavg-summary').innerHTML='';document.getElementById('vconavg-detail').innerHTML=''">CLEAR</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Résumé</div>
+      <div class="summary-box" id="vconavg-summary" style="min-height:60px">
+        <div class="summary-stat" style="color:var(--dim)">Collez les VCONs et cliquez Calculer.</div>
+      </div>
+      <div class="label" style="margin-top:10px">Filtrer par trader</div>
+      <input type="text" id="vconavg-filter" placeholder="ex: DALMEIDA, TOSIN..." oninput="filterVCONAvg()" style="width:100%">
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="sec-title">DÉTAIL PAR TRADER / PRODUIT</div>
+  <div class="tbl-wrap" id="vconavg-detail" style="max-height:600px"></div>
+</div>
+
+<!-- ════════════════════════════════════════════════ TAB 6: SEALS AVG -->
+<div class="panel" id="panel-sealsavg">
+  <div class="sec-title">SEALS AVG — MOYENNE PAR CLIENT ET PAR PRODUIT</div>
+  <div class="sublabel" style="margin-bottom:12px">Collez les données SEALS pour obtenir la moyenne pondérée buy/sell par compte et par produit.</div>
+  <div class="two-col">
+    <div class="col">
+      <div class="label">SEALS Export</div>
+      <div class="sublabel">Format TSV SEALS</div>
+      <textarea id="sealsavg-input" style="height:260px" placeholder="Coller les données SEALS ici..."></textarea>
+      <div class="actions" style="margin-top:8px">
+        <button class="btn" onclick="computeSEALSAvg()">&#9654; CALCULER MOYENNES</button>
+        <button class="btn btn-blue btn-sm" onclick="document.getElementById('sealsavg-input').value='';document.getElementById('sealsavg-summary').innerHTML='';document.getElementById('sealsavg-detail').innerHTML=''">CLEAR</button>
+      </div>
+    </div>
+    <div class="col">
+      <div class="label">Résumé</div>
+      <div class="summary-box" id="sealsavg-summary" style="min-height:60px">
+        <div class="summary-stat" style="color:var(--dim)">Collez les données SEALS et cliquez Calculer.</div>
+      </div>
+      <div class="label" style="margin-top:10px">Filtrer par client / produit</div>
+      <input type="text" id="sealsavg-filter" placeholder="ex: FAB, TOSIN, VG, RX..." oninput="filterSEALSAvg()" style="width:100%">
+    </div>
+  </div>
+  <hr class="divider">
+  <div class="sec-title">DÉTAIL PAR CLIENT / PRODUIT</div>
+  <div class="tbl-wrap" id="sealsavg-detail" style="max-height:600px"></div>
+</div>
+
+</div><!-- /panels -->
+<div class="status-bar">
+  <span>TRT v1.0</span>
+  <span>CHAT: <span id="sb-accounts">0</span> comptes · <span id="sb-trades">0</span> trades</span>
+  <span>VCON: <span id="sb-vcon">non chargé</span></span>
+  <span>SEALS: <span id="sb-seals">non chargé</span></span>
+  <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="exportData()" style="background:transparent;border:1px solid #00d488;color:#00d488;padding:2px 10px;cursor:pointer;font-size:10px;letter-spacing:1px">⬇ EXPORT</button>
+    <button onclick="document.getElementById('import-input').click()" style="background:transparent;border:1px solid #4da6ff;color:#4da6ff;padding:2px 10px;cursor:pointer;font-size:10px;letter-spacing:1px">⬆ IMPORT</button>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+  </span>
+</div>
+
+<!-- FULL VIEW MODAL -->
+<div id="modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:100;padding:40px;overflow:auto;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--bg2);border:1px solid var(--amber);padding:20px;max-width:800px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span class="label">ALL DAY RECAP — FULL VIEW</span>
+      <button class="btn btn-sm" onclick="document.getElementById('modal').style.display='none'">FERMER</button>
+    </div>
+    <pre id="modal-content" style="font-family:var(--mono);font-size:12px;white-space:pre;color:var(--text);line-height:1.7;"></pre>
+  </div>
+</div>
+<script>
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function getClientForAccount(account) {
+  const m = accountMappings[account];
+  if (!m || m.clientIdx === undefined || m.clientIdx < 0) return null;
+  return CLIENT_DB[m.clientIdx] || null;
+}
+
+function vconRequiredForAccount(account) {
+  const m = accountMappings[account];
+  if (m && m.vconOverride !== undefined && m.vconOverride !== '') return m.vconOverride;
+  const c = getClientForAccount(account);
+  if (!c) return 'unknown';
+  return c.vcon; // 'Yes', 'No', 'Yes MSF', 'EMSX', ''
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VCON PARSER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function parseVCONScreenCopy(raw) {
+  // Handles Bloomberg VCON screen-copy format:
+  // "1.	S	50 c	VGM6	5539	JAYANT VALLABH…	09:59:16	Confir…	MERRILL…	EUR	ANTHONY COHEN…	 	04/02/26	..."
+  const lines = raw.trim().split('\n');
+  const trades = [];
+  let row = 0;
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    // Must start with a number followed by dot (1. 2. etc.)
+    if (!/^\d+\./.test(t)) continue;
+    // Remove leading "1.	"
+    const cols = t.replace(/^\d+\.\s*/, '').split('\t');
+    if (cols.length < 6) continue;
+    const bs        = cols[0]?.trim();  // S or B
+    const amtStr    = cols[1]?.trim();  // "50 c"
+    const security  = cols[2]?.trim();  // "VGM6" or "DUM6" etc.
+    const priceStr  = cols[3]?.trim();  // "5539.0000000"
+    const recipient = (cols[4]?.trim()||'').toUpperCase();
+    const tradeTime = cols[5]?.trim();  // "09:59:16"
+    const status    = cols[6]?.trim();  // "Confir…"
+    const firm      = cols[7]?.trim();  // "MERRILL…"
+    const ccy       = cols[8]?.trim();
+    const sender    = cols[9]?.trim();
+    const notes     = (cols[10]?.trim()||'').toUpperCase();
+    const tradeDate = cols[11]?.trim();
+    // Use Security column (cols[2]) — full ticker incl. strike
+    // cols[13] is the truncated "Tick…" column — ignore it
+    const ticker    = security;
+
+    if (!bs || (bs !== 'S' && bs !== 'B')) continue;
+    const qty = parseQty(amtStr);
+    if (!qty) continue;
+
+    trades.push({
+      bs, qty,
+      security,
+      price: parseFloat(priceStr) || 0,
+      recipient,
+      notes,
+      ticker: ticker || security,
+      status,
+      tradeTime,
+      row: row++
+    });
+  }
+  return trades;
+}
+
+function parseVCONData(raw) {
+  const lines = raw.trim().split('\n').filter(l=>l.trim());
+  if (!lines.length) return [];
+
+  // Auto-detect format: if any line starts with "1." or "2." → screen-copy format
+  const isScreenCopy = lines.some(l => /^\d+\./.test(l.trim()));
+  if (isScreenCopy) return parseVCONScreenCopy(raw);
+
+  const header = lines[0].split('\t');
+  const idx = {};
+  header.forEach((h,i) => idx[h.trim()] = i);
+
+  const trades = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split('\t');
+    if (cols.length < 5) continue;
+    trades.push({
+      bs:        cols[idx['BS']]?.trim(),
+      qty:       parseQty(cols[idx['Amount']]?.trim()||'0'),
+      security:  cols[idx['Security']]?.trim(),
+      price:     parseFloat(cols[idx['PriceDiscount']])||0,
+      recipient: (cols[idx['Recipient']]?.trim()||'').toUpperCase(),
+      notes:     (cols[idx['DealerNotes']]?.trim()||'').toUpperCase(),
+      // Use Security for full ticker (Ticker col may be truncated)
+      ticker:    cols[idx['Security']]?.trim() || cols[idx['Ticker']]?.trim(),
+      status:    cols[idx['Status']]?.trim(),
+      tradeTime: cols[idx['TradeTime']]?.trim()||'',
+      row: i
+    });
+  }
+  return trades;
+}
+
+function resolveVCONRecipient(v) {
+  if (v.notes && v.notes.trim()) return v.notes.trim().toUpperCase();
+  return v.recipient.trim().toUpperCase();
+}
+// Permanent recipient aliases: VCONs sent to these names are treated as the mapped trader
+const VCON_RECIPIENT_ALIASES = {
+  'SEBASTIAN PIRES': 'ROBERT DALMEIDA',
+  'SEBASTIEN PIRES': 'ROBERT DALMEIDA',
+  'PIRES':           'ROBERT DALMEIDA',
+};
+
+function resolveVCONClient(v) {
+  // 1. DealerNotes override (e.g. Ghita → GARY)
+  const notes = (v.notes || '').trim().toUpperCase().replace(/[…\.]+/g,'').trim();
+  if (notes) return notes;
+  // 2. Recipient name
+  const recip = resolveVCONRecipient(v);
+  // 3. Permanent alias mapping
+  const recipClean = recip.replace(/[…\.]+/g,'').trim();
+  for (const alias in VCON_RECIPIENT_ALIASES) {
+    if (recipClean.indexOf(alias) >= 0 || alias.indexOf(recipClean) >= 0) {
+      return VCON_RECIPIENT_ALIASES[alias];
+    }
+  }
+  return recip;
+}
+
+
+function getVCONMapping(account) {
+  const m = accountMappings[account];
+  if (m && m.vconRecipient) return m.vconRecipient.toUpperCase();
+  if (mappingsVCON[account]) return mappingsVCON[account].toUpperCase();
+  return null;
+}
+
+function findVCONTradesForAccount(account, vconByRecipient) {
+  const explicitKey = getVCONMapping(account);
+  if (explicitKey && vconByRecipient[explicitKey]) return vconByRecipient[explicitKey];
+  const accountWords = account.toUpperCase().split(/[\s_\-]+/).filter(w => w.length > 2);
+  for (const [recipKey, trades] of Object.entries(vconByRecipient)) {
+    const recipWords = recipKey.split(/[\s_\-]+/);
+    const match = accountWords.some(aw => recipWords.some(rw => rw.includes(aw) || aw.includes(rw)));
+    if (match) return trades;
+  }
+  const firstWord = account.split(/[\s_\-]+/)[0].toUpperCase();
+  if (vconByRecipient[firstWord]) return vconByRecipient[firstWord];
+  return [];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEALS → BBG TICKER MAP
+// ═══════════════════════════════════════════════════════════════════════════════
+const SEALS_BBG = {
+  // EUREX
+  'FGBL':'RX','FBTP':'IK','FGBM':'OE','FGBS':'DU',
+  'FESX':'VG','FESB':'VG','FGBX':'UB','FBTS':'IK2',
+  // CBOT product IDs
+  '21':'TY','25':'FV','26':'TU','17':'US',
+  'TN':'UXY','UBE':'WN','ZN':'TY','ZF':'FV','ZT':'TU','ZB':'US',
+  // ICE/IFLL
+  'R':'G','L':'L','I':'I',
+  'SO3':'SFI','SFIZ6':'SFI',
+  // CFE
+  'VX':'UX',
+  // CME
+  'ES':'SP','NQ':'NDX',
+  // NYBOT
+  'SB':'SB',
+};
+
+const MONTH_CODES = {
+  'JAN':'F','FEB':'G','MAR':'H','APR':'J','MAY':'K','JUN':'M',
+  'JUL':'N','AUG':'Q','SEP':'U','OCT':'V','NOV':'X','DEC':'Z'
+};
+
+function sealsToBBG(prod, exp) {
+  const base = SEALS_BBG[prod] || prod;
+  if (!exp || exp === '') return base;
+  const m = exp.match(/^([A-Z]{3})(\d{2})$/);
+  if (!m) return base + exp;
+  const mc = MONTH_CODES[m[1]] || '?';
+  return base + mc + m[2].slice(-1);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════════
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['parser','vcon','seals','mapping','global','history'][i]===id));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if (id==='mapping') renderMappingUI();
+  if (id==='history') renderHistory();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+function parseQty(s) {
+  return parseFloat(s.replace(/,/g,'').replace(/\s*c\s*/i,'').trim()) || 0;
+}
+function parsePrice(s) {
+  // Handle "109.875 (109-28)" → 109.875
+  // Handle "107.4765625" → 107.4765625
+  const m = s.match(/^([\d.]+)/);
+  return m ? parseFloat(m[1]) : 0;
+}
+function priceStr(s) {
+  // Extract clean price string for display
+  return s.trim();
+}
+function getShortTicker(ticker) {
+  if (isOptionTicker(ticker)) {
+    // Return base: "SX5E" from "SX5E 04/17/26 P5450"
+    return ticker.split(/\s/)[0];
+  }
+  // Remove expiry code: VGM6→VG, UXYM6→UXY, RXM6→RX
+  return ticker.replace(/[FGHJKMNQUVXZ]\d+$/, '');
+}
+function isOptionTicker(ticker) {
+  // Has date pattern OR P/C + strike OR known option root patterns (root + space + digits)
+  if (/\d{2}\/\d{2}\/\d{2}/.test(ticker)) return true;   // date in ticker
+  if (/\s[PC]\d{3,}/.test(ticker)) return true;             // space + C/P + digits
+  if (/[CP]\d{1}\s+\d{4,}/.test(ticker)) return true;     // C/P + week + space + strike
+  if (/[CP]\s*\d{4,}/.test(ticker)) return true;           // C/P + strike (no space)
+  // Option root patterns: known prefixes followed by month code + year digit + P/C + week + space + strike
+  // e.g. IWWWJ6P2 6700, IMDWJ6P2 6700, IMBWJ6P2 6700, 2EJ6P 6775, 1EJ6P 6700
+  if (/^(IWWW|IMDW|IMBW|ESW|SC)\w+\s+\d{4,}$/.test(ticker)) return true;
+  if (/^[1-5]E\w+\s+\d{4,}$/.test(ticker)) return true;  // 1E, 2E, 3E, 4E, 5E weekly
+  if (/^2EJ|^1EJ|^3EJ|^4EJ|^5EJ/.test(ticker)) return true;
+  return false;
+}
+function normalizeTickerForMatch(t) {
+  // Lowercase, remove spaces, remove expiry month code
+  return t.replace(/\s+/g,'').toLowerCase().replace(/[fghjkmnquvxz]\d$/,'');
+}
+function pricesMatch(p1, p2, tol=0.001) {
+  const a = parseFloat(p1), b = parseFloat(p2);
+  if (isNaN(a)||isNaN(b)) return false;
+  if (a===0&&b===0) return true;
+  return Math.abs(a-b)/(Math.max(Math.abs(a),Math.abs(b))||1) < tol;
+}
+
+function timeToSecs(t) {
+  if (!t) return 0;
+  const p = t.trim().split(':');
+  if (p.length < 2) return 0;
+  return parseInt(p[0]||0)*3600 + parseInt(p[1]||0)*60 + parseInt(p[2]||0);
+}
+
+function pricesExact(p1, p2) {
+  // "Exact" match: absolute difference < 0.01 (handles 5435.8533333 vs 5435.8533000)
+  return Math.abs(parseFloat(p1) - parseFloat(p2)) < 0.01;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHAT PARSER
+// ═══════════════════════════════════════════════════════════════════════════════
+function splitMessages(raw) {
+  const messages = [];
+  let cur = null;
+  for (const line of raw.split('\n')) {
+    const ts = line.match(/^(\d{2}:\d{2}:\d{2})\s+(.+?):\s*(.*)/);
+    if (ts) {
+      if (cur) messages.push(cur);
+      cur = { time: ts[1], sender: ts[2].trim(), content: ts[3] || '', idx: messages.length };
+    } else if (cur) {
+      cur.content += '\n' + line;
+    }
+  }
+  if (cur) messages.push(cur);
+  return messages;
+}
+
+function stripBBGTags(s) {
+  // Remove Bloomberg formatting tags like {V3}, {P2}, {P8}, etc.
+  return s.replace(/\{[A-Z][A-Za-z0-9]*\}/g, '').trim();
+}
+
+function extractTradesFromMsg(msg) {
+  // Returns { account, trades[] } or null
+
+  // ── POSITION BLOCK DETECTION ─────────────────────────────────────────────
+  // Messages containing {P8} POSITION {P8} are position summaries, not bookings.
+  // They may embed {P2}/{P4} lines from the day — must NOT be re-parsed.
+  if (/\{P8\}\s*POSITION\s*\{P8\}/i.test(msg.content)) return null;
+
+  // ── DETECT ACCOUNT HEADER ─────────────────────────────────────────────────
+  // Format 1: ----ACCOUNT  (standard Joisten)
+  // Format 2: -----{V3}ACCOUNT (Bloomberg account tag, with dashes)
+  // Format 3: {V3}ACCOUNT (Bloomberg account tag, NO dashes — William style)
+  let accountSearchIdx = msg.content.search(/^-{3,}/m);
+  let accountMatch = null;
+  let accountFromTag = false;
+
+  if (accountSearchIdx >= 0) {
+    const textBefore = msg.content.substring(0, accountSearchIdx).trim();
+    if (textBefore.length > 0) return null; // quoted message → ignore
+    accountMatch = msg.content.match(/^-{3,}(.+)/m);
+  } else {
+    // Try Bloomberg tag format: line starts with {Vn}ACCOUNT (no dashes)
+    // Must be first non-empty line AND followed by a {P2}/{P4} line
+    const tagMatch = msg.content.match(/^(\{V\d\}[A-Z0-9_\-]+)/m);
+    if (!tagMatch) return null;
+    // Verify there's a trade line in the same message
+    if (!/{P[24]}/.test(msg.content)) return null;
+    accountMatch = tagMatch;
+    accountFromTag = true;
+    accountSearchIdx = 0;
+  }
+
+  if (!accountMatch) return null;
+
+  // Strip Bloomberg tags from account name & trim
+  const rawAccount = accountFromTag ? accountMatch[1] : accountMatch[1];
+  const account = stripBBGTags(rawAccount).trim();
+  if (!account) return null;
+
+  // ── QUOTED MESSAGE DETECTION (only for dash-style headers) ───────────────
+  if (!accountFromTag) {
+    const textBefore = msg.content.substring(0, accountSearchIdx).trim();
+    if (textBefore.length > 0) return null;
+  }
+
+  // ── CORRECTION DETECTION ─────────────────────────────────────────────────
+  const isCorrection = /CORRECTION/i.test(msg.content);
+
+  const postTrades = [];
+  for (const cl of msg.content.split('\n')) {
+    const stripped = cl.trim();
+    const P = stripped.match(/^\{P([24])\}/);
+    if (!P) continue;
+    const side = P[1] === '2' ? '+' : '-';
+    const tradeStr = stripped.replace(/^\{P[24]\}/, '').trim();
+    // Primary: +/-QTY TICKER @ PRICE
+    let tm = tradeStr.match(/^([+-])([\d,]+(?:\.\d+)?)\s+(.+?)\s+@\s+(.+)$/);
+    if (!tm) {
+      // Fallback: +/-QTY TICKER PRICE (no @ — manual post without @)
+      tm = tradeStr.match(/^([+-])([\d,]+(?:\.\d+)?)\s+([A-Z][A-Z0-9]+(?:\s+[A-Z0-9]+)?)\s+([\d.]+(?:\s*\([^)]+\))?)$/);
+    }
+    if (!tm) continue;
+    postTrades.push({
+      side: tm[1], qty: parseQty(tm[2]),
+      ticker: tm[3].trim(), price: tm[4].trim(),
+      priceNum: parsePrice(tm[4]),
+      isOption: isOptionTicker(tm[3].trim()),
+      raw: stripped,
+      isCorrection: isCorrection || false,
+      time: msg.time, sender: msg.sender, account,
+      postId: msg.time + '|' + msg.sender + '|' + msg.idx,
+    });
+  }
+
+  return postTrades.length ? { account, trades: postTrades } : null;
+}
+
+function tradeKey(t) {
+  // Unique key for dedup: ignore postId, compare content only
+  return `${t.side}|${t.qty}|${t.ticker}|${t.price}`;
+}
+
+function parseAllDayBlock(msg) {
+  // Parse a {P8}ALL DAY{P8} message — may contain multiple ----ACCOUNT blocks
+  const result = {};
+  let currentAccount = null;
+  let currentPostTrades = [];
+
+  const flushPost = () => {
+    if (currentAccount && currentPostTrades.length) {
+      if (!result[currentAccount]) result[currentAccount] = [];
+      result[currentAccount].push(...currentPostTrades);
+    }
+    currentPostTrades = [];
+  };
+
+  for (const cl of msg.content.split('\n')) {
+    const stripped = cl.trim();
+    const accMatch = stripped.match(/^-{3,}(.+)/);
+    if (accMatch) { flushPost(); currentAccount = accMatch[1].trim(); continue; }
+
+    const P = stripped.match(/^\{P([24])\}/);
+    if (!P || !currentAccount) continue;
+    const side = P[1]==='2'?'+':'-';
+    const tradeStr = stripped.replace(/^\{P[24]\}/,'').trim();
+    // Handle ** block prefix
+    const cleanStr = tradeStr.replace(/^\*\*/,'').replace(/\s+block\s*$/i,'').trim();
+    const tm = cleanStr.match(/^([+-])([\d,]+(?:\.\d+)?)\s+(.+?)\s+@\s+(.+)$/);
+    if (!tm) continue;
+    currentPostTrades.push({
+      side:tm[1], qty:parseQty(tm[2]),
+      ticker:tm[3].trim(), price:tm[4].trim(),
+      priceNum:parsePrice(tm[4]),
+      isOption:isOptionTicker(tm[3].trim()),
+      
+      raw:stripped,
+      time:msg.time, sender:msg.sender, account:currentAccount,
+      postId:'ALLDAY|'+msg.time,
+      fromAllDay: true,
+    });
+  }
+  flushPost();
+  return result;
+}
+
+function parseChat() {
+  const raw = document.getElementById('chat-input').value;
+  if (!raw.trim()) { setStatus('parse-status','Aucun texte','err'); return; }
+
+  parsedChat = {};
+  const messages = splitMessages(raw);
+
+  // ── Step 1: Find the LAST {P8}ALL DAY{P8} block in the chat
+  let allDayMsgIdx = -1;
+  for (let i = 0; i < messages.length; i++) {
+    if (/\{P8\}\s*ALL\s*DAY\s*\{P8\}/i.test(messages[i].content))
+      allDayMsgIdx = i;
+  }
+
+  if (allDayMsgIdx >= 0) {
+    // ── Strategy: parse ALL trade posts in the full chat (before + after pre-ALL DAY)
+    // The pre-ALL DAY may be incomplete — we cannot trust it as the sole baseline.
+    // Instead: scan everything, dedup by timestamp+sender+tradeKey.
+    const seenPostIds = new Set();
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+
+      // Skip the pre-ALL DAY message itself (it's a recap, not a booking)
+      if (i === allDayMsgIdx) continue;
+
+
+
+      const extracted = extractTradesFromMsg(msg);
+      if (!extracted) continue;
+      const { account, trades } = extracted;
+      if (!parsedChat[account]) parsedChat[account] = [];
+
+      for (const t of trades) {
+        const postDedupKey = t.time + '|' + t.sender + '|' + tradeKey(t);
+        if (seenPostIds.has(postDedupKey)) continue;
+        seenPostIds.add(postDedupKey);
+        parsedChat[account].push(t);
+      }
+    }
+
+    // Sort each account's trades chronologically
+    for (const trades of Object.values(parsedChat)) {
+      trades.sort((a, b) => timeToSecs(a.time) - timeToSecs(b.time));
+    }
+
+    setStatus('parse-status',
+      `✓ Pré-ALL DAY à ${messages[allDayMsgIdx].time} · ${Object.keys(parsedChat).length} comptes · ${Object.values(parsedChat).flat().length} trades`,
+      'ok');
+
+  } else {
+    // ── Step 2b: No ALL DAY block — parse all trade posts
+    // Dedup by time|sender|tradeKey (NOT msgIdx) to catch:
+    //   - exact duplicate posts (same timestamp, same content)
+    //   - Bloomberg quoted messages appearing out of chronological order
+    const seenPostTrades = new Set();
+    for (const msg of messages) {
+
+
+      const extracted = extractTradesFromMsg(msg);
+      if (!extracted) continue;
+      const { account, trades } = extracted;
+      if (!parsedChat[account]) parsedChat[account] = [];
+
+      for (const t of trades) {
+        // Dedup: time|sender|tradeKey — catches same-second duplicates regardless of msgIdx
+        const dedupKey = t.time + '|' + t.sender + '|' + tradeKey(t);
+        if (seenPostTrades.has(dedupKey)) continue;
+        seenPostTrades.add(dedupKey);
+        parsedChat[account].push(t);
+      }
+    }
+
+    setStatus('parse-status',
+      `✓ ${Object.keys(parsedChat).length} comptes · ${Object.values(parsedChat).flat().length} trades`,
+      'ok');
+  }
+
+  // ── Render
+  const allDay = generateAllDay();
+  lastAllDay = allDay;
+  document.getElementById('chat-output').innerHTML = colorizeOutput(allDay);
+  document.getElementById('modal-content').textContent = allDay;
+
+  const nAcc = Object.keys(parsedChat).length;
+  const nTr  = Object.values(parsedChat).flat().length;
+  document.getElementById('hdr-accounts').textContent = nAcc;
+  document.getElementById('hdr-trades').textContent   = nTr;
+  document.getElementById('sb-accounts').textContent  = nAcc;
+  document.getElementById('sb-trades').textContent    = nTr;
+
+  // ── Merge "temporary fill" placeholder accounts into real accounts ──────────
+  mergeTempAccounts();
+
+  renderParsedTable();
+  autoDetectMappings();
+  saveCurrentChatParse(); // auto-save to history
+}
+
+function isTempAccount(name) {
+  return /^(temporary|temp|tmp|placeholder|fill)/i.test(name.trim());
+}
+
+function mergeTempAccounts() {
+  const tempKeys = Object.keys(parsedChat).filter(isTempAccount);
+  if (!tempKeys.length) return;
+
+  // Find real accounts (non-temp) — use the last real account seen as merge target
+  // Better: find a real account that shares the same product/session context
+  // Simple heuristic: merge temp trades into the account that traded the same ticker most recently
+  const realAccounts = Object.keys(parsedChat).filter(k => !isTempAccount(k));
+
+  for (const tempKey of tempKeys) {
+    const tempTrades = parsedChat[tempKey];
+    if (!tempTrades.length) { delete parsedChat[tempKey]; continue; }
+
+    // Find best real account to merge into:
+    // 1. Account that already has trades of the same ticker
+    // 2. Fallback: last real account in order
+    let bestAccount = realAccounts[realAccounts.length - 1] || null;
+
+    for (const trade of tempTrades) {
+      const ticker = getShortTicker(trade.ticker);
+      for (const ra of realAccounts) {
+        const hasSameTicker = (parsedChat[ra] || []).some(t => getShortTicker(t.ticker) === ticker);
+        if (hasSameTicker) { bestAccount = ra; break; }
+      }
+    }
+
+    if (bestAccount) {
+      // Add temp trades to real account, flag them so user knows they were merged
+      for (const t of tempTrades) {
+        t.mergedFrom = tempKey;
+        parsedChat[bestAccount].push(t);
+      }
+      // Sort by time
+      parsedChat[bestAccount].sort((a,b) => timeToSecs(a.time) - timeToSecs(b.time));
+    }
+
+    delete parsedChat[tempKey];
+  }
+}
+
+function generateAllDay() {
+  let out = '{P8}ALL DAY{P8}\n';
+
+  for (const [account, trades] of Object.entries(parsedChat)) {
+    out += '\n----' + account + '\n';
+
+    // Separate futures from options
+    const futures = trades.filter(t => !t.isOption);
+    const options = trades.filter(t => t.isOption);
+
+    // ── Futures: group by short ticker, summary if >1 ──────────────────────
+    const tickerOrder = [];
+    const futuresByTicker = {};
+    for (const t of futures) {
+      const short = getShortTicker(t.ticker);
+      if (!futuresByTicker[short]) { futuresByTicker[short] = []; tickerOrder.push(short); }
+      futuresByTicker[short].push(t);
+    }
+    for (const short of tickerOrder) {
+      const group = futuresByTicker[short];
+      if (group.length > 1) {
+        let buy = 0, sell = 0;
+        for (const t of group) { if (t.side==='+') buy += t.qty; else sell += t.qty; }
+        let sum = short;
+        if (buy  > 0) sum += ' +' + buy;
+        if (sell > 0) sum += ' -' + sell;
+        out += sum + '\n';
+      }
+      for (const t of group) {
+        out += (t.side==='+' ? '{P2}' : '{P4}') + t.side + t.qty + ' ' + t.ticker + ' @ ' + t.price + '\n';
+      }
+    }
+
+    // ── Options: group by full ticker (same strike = same product), summary if >1 ──
+    const optOrder = [];
+    const optsByTicker = {};
+    for (const t of options) {
+      const key = t.ticker;  // full ticker including date+strike = unique product
+      if (!optsByTicker[key]) { optsByTicker[key] = []; optOrder.push(key); }
+      optsByTicker[key].push(t);
+    }
+    for (const key of optOrder) {
+      const group = optsByTicker[key];
+      if (group.length > 1) {
+        let buy = 0, sell = 0;
+        for (const t of group) { if (t.side==='+') buy += t.qty; else sell += t.qty; }
+        let sum = key;
+        if (buy  > 0) sum += ' +' + buy;
+        if (sell > 0) sum += ' -' + sell;
+        out += sum + '\n';
+      }
+      for (const t of group) {
+        out += (t.side==='+' ? '{P2}' : '{P4}') + t.side + t.qty + ' ' + t.ticker + ' @ ' + t.price + '\n';
+      }
+    }
+  }
+
+  return out;
+}
+
+
+function colorizeOutput(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^\{P8\}.+\{P8\}/mg, s => `<span class="hdr">${s}</span>`)
+    .replace(/^----(.+)$/mg, s => `<span class="acc">${s}</span>`)
+    .replace(/^([A-Z]+(?:UXY|WN)?\s[+-]\d+.*)/mg, s => `<span class="sum">${s}</span>`)
+    .replace(/^\*\*\{P2\}.+/mg, s => `<span class="blk">${s}</span>`)
+    .replace(/^\{P2\}.+/mg, s => `<span class="P2">${s}</span>`)
+    .replace(/^\{P4\}.+/mg, s => `<span class="P4">${s}</span>`);
+}
+
+function renderParsedTable() {
+  const wrap = document.getElementById('parsed-table-wrap');
+  if (!Object.keys(parsedChat).length) { wrap.innerHTML=''; return; }
+
+  let html = '<table><thead><tr><th>COMPTE</th><th>HEURE</th><th>SENS</th><th>QTÉ</th><th>TICKER</th><th>PRIX</th><th>TYPE</th></tr></thead><tbody>';
+  for (const [acc, trades] of Object.entries(parsedChat)) {
+    for (const t of trades) {
+      const sc = t.side==='+' ? 'ok':'err';
+      const corrBadge = t.isCorrection ? ' <span class="badge badge-err">CORRECTION</span>' : '';
+      const type = (false ? '' : (t.isOption ? '<span class="badge badge-info">OPTION</span>' : '<span class="badge badge-info">FUT</span>')) + corrBadge;
+      html += `<tr>
+        <td><b style="color:var(--amber)">${acc}</b></td>
+        <td>${t.time}</td>
+        <td class="${sc}">${t.side==='+'?'▲ BUY':'▼ SELL'}</td>
+        <td>${t.qty.toLocaleString()}</td>
+        <td>${t.ticker}</td>
+        <td>${t.price}</td>
+        <td>${type}</td>
+      </tr>`;
+    }
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AGGREGATED RECONCILIATION ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function buildChatAgg() {
+  // Key by (sealsRef + normTickerForKey) — preserves strike for options
+  const agg = {};
+  for (const [account, trades] of Object.entries(parsedChat)) {
+    for (const t of trades) {
+      const normKey = normTickerForKey(t.ticker);  // keeps strike: SX5E_C5750
+      const displayKey = t.ticker;
+      const { ref: sealsRef, display } = recipientToSealsRef(account, t.ticker);
+      const key = sealsRef + '|' + normKey;
+      if (!agg[key]) agg[key] = { account, sealsRef, ticker: normKey, displayTicker: displayKey, buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0 };
+      if (t.side === '+') { agg[key].buy_qty += t.qty; agg[key].buy_sum += t.qty * t.priceNum; }
+      else                { agg[key].sell_qty += t.qty; agg[key].sell_sum += t.qty * t.priceNum; }
+    }
+  }
+  for (const g of Object.values(agg)) {
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+  return agg;
+}
+
+
+// ── Product category helpers ────────────────────────────────────────────────
+const RATES_TICKERS = new Set(['RX','OE','IK','DU','TY','TU','US','FV','WN','UXY','G','L','R','SO3','SFI','UB','UBM6',
+  'FGBL','FBTP','FGBM','FGBS','FGBX','FBTS','FBUP','OAT','BTP','GILT','Z']);
+const EQUITY_TICKERS = new Set(['VG','ES','NQ','SP','CAC','DAX','FESX','FESB','SX5E','WSX5E','IMD','SCX','SMI','NK','HSI','AEX','RTY']);
+
+// Option ticker prefixes — first 2-4 alpha chars before digits/expiry
+const EQUITY_OPT_PREFIXES = new Set(['ESW','ESF','SPX','VIX','NDX','SX5E','WSX','SX5','IMD','SCX','SMI','NKD','HSI','RTY','EUE','CEB']);
+const RATES_OPT_PREFIXES  = new Set(['OEK','OEM','DUK','DUM','RXK','RXM','IKK','IKM','TYK','TYM','TUK','TUM','FVK','FVM','USK','USM',
+  'UXY','OEZ','DUZ','RXZ','SFI','SO3']);
+
+function productCategory(ticker) {
+  const t = ticker.toUpperCase().trim();
+  // Check full ticker in rates/equity sets
+  const short = t.replace(/\s.*$/, '').replace(/[A-Z]?\d{1,2}$/, ''); // strip expiry
+  if (RATES_TICKERS.has(short)) return 'rates';
+  if (EQUITY_TICKERS.has(short)) return 'equity';
+  // Check option prefixes (first 3-4 chars)
+  for (const pfx of EQUITY_OPT_PREFIXES) { if (t.startsWith(pfx)) return 'equity'; }
+  for (const pfx of RATES_OPT_PREFIXES)  { if (t.startsWith(pfx)) return 'rates'; }
+  // Fallback: check full short ticker
+  const s2 = getShortTicker(t).toUpperCase();
+  if (RATES_TICKERS.has(s2)) return 'rates';
+  if (EQUITY_TICKERS.has(s2)) return 'equity';
+  // Futures/options: if ticker contains C/P + strike → option, classify by exchange context
+  // ESW = ES weekly = equity, IMD = MSCI equity index
+  if (/^(ESW|IMD|SX5|WSX|CEB|EUE)/.test(t)) return 'equity';
+  if (/^(OEK|OEM|DUK|DUM|RXK|RXM|IKK|IKM|TYK|TYM)/.test(t)) return 'rates';
+  return 'unknown';
+}
+
+// Resolve VCON recipient to SEALS ref using CLIENT_DB
+// If multiple entries (Jay EQ vs Arta FI), disambiguate by product category
+function recipientToSealsRef(recipientName, ticker) {
+  // Strip Bloomberg truncation artifacts (trailing …, -, spaces)
+  const nameUpper = recipientName.toUpperCase().trim()
+    .replace(/[…\.]+/g, '').trim();  // strip all ellipsis (Bloomberg truncation)
+  const nameWords = nameUpper.split(/[\s_\-,]+/).filter(w => w.length > 2);
+  const cat = productCategory(ticker);
+
+  const matches = [];
+  for (const c of CLIENT_DB) {
+    if (!c.trader || !c.seals) continue;
+    const traderWords = c.trader.toUpperCase().split(/[\s_\-,]+/);
+    // Match: any name word starts with or equals any trader word (handles truncation)
+    const isMatch = nameWords.some(nw =>
+      traderWords.some(tw =>
+        tw === nw ||                    // exact
+        tw.startsWith(nw) ||           // trader word starts with name word (VALLABHRAMA starts with VALLABH)
+        nw.startsWith(tw)              // name word starts with trader word (JAY... starts with JAY)
+      )
+    );
+    if (isMatch) matches.push(c);
+  }
+
+  if (!matches.length) return { ref: nameUpper, display: recipientName };
+
+  // Disambiguate by category
+  if (cat === 'rates') {
+    const ratesMatch = matches.find(m => /rates|fi|rts|bonds/i.test(m.category) || / FI/i.test(' '+m.seals));
+    if (ratesMatch) return { ref: ratesMatch.seals.toUpperCase(), display: ratesMatch.trader };
+  }
+  if (cat === 'equity' || cat === 'unknown') {
+    // Options and equity futures → equity book by default
+    const eqMatch = matches.find(m => /equity|eq/i.test(m.category) || / EQ /i.test(' '+m.seals+' '));
+    if (eqMatch) return { ref: eqMatch.seals.toUpperCase(), display: eqMatch.trader };
+  }
+
+  // Fallback: first match
+  return { ref: matches[0].seals.toUpperCase(), display: matches[0].trader };
+}
+
+function buildVCONAgg(vcons) {
+  // Key by: SEALS ref + normTickerForKey — preserves strike for options
+  const agg = {};
+  for (const v of vcons) {
+    const rawRecipient = resolveVCONClient(v);
+    const rawTicker = (v.security && v.security.length > (v.ticker||'').length) ? v.security : (v.ticker || v.security || '');
+    const normKey = normTickerForKey(rawTicker);
+    if (!normKey) continue;
+    const { ref: sealsRef, display } = recipientToSealsRef(rawRecipient, rawTicker);
+    const key = sealsRef + '|' + normKey;
+    if (!agg[key]) agg[key] = { client: display || rawRecipient, sealsRef, ticker: normKey, displayTicker: rawTicker, buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0 };
+    const qty = v.qty, px = v.price;
+    if (v.bs === 'S') { agg[key].buy_qty  += qty; agg[key].buy_sum  += qty * px; }
+    else              { agg[key].sell_qty += qty; agg[key].sell_sum += qty * px; }
+  }
+  for (const g of Object.values(agg)) {
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+  return agg;
+}
+
+function buildSEALSAgg(sealsTrades) {
+  // Group by ref + short ticker (after aggregation of fills)
+  const agg = {};
+  const lines = aggregateSEALS(sealsTrades);
+  for (const s of lines) {
+    const short = normalizeTickerForMatch(s.bbgTicker);
+    const key = s.ref + '|' + short;
+    if (!agg[key]) agg[key] = { ref: s.ref, ticker: short, buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0 };
+    const qty = s.vol, px = s.unrPx;
+    if (s.bs === 'Buy')  { agg[key].buy_qty  += qty; agg[key].buy_sum  += qty * px; }
+    else                 { agg[key].sell_qty += qty; agg[key].sell_sum += qty * px; }
+  }
+  for (const g of Object.values(agg)) {
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+  return agg;
+}
+
+function fmtAvg(v) {
+  if (v === null || v === undefined) return '—';
+  return parseFloat(v.toFixed(4)).toString();
+}
+
+function qtyMatch(a, b)  { return a === b; }
+function avgClose(a, b)  {
+  if (a === null || b === null) return a === b;
+  return Math.abs(a - b) / (Math.max(Math.abs(a), Math.abs(b)) || 1) < 0.002; // 0.2%
+}
+
+function renderReconTable(rows, colSources) {
+  // rows: [{ ticker, account_label, src: { chat:{buy_qty,sell_qty,buy_avg,sell_avg}, vcon:..., seals:... } }]
+  const cols = colSources; // e.g. ['chat','vcon'] or ['chat','seals'] or ['chat','vcon','seals']
+
+  const head = `<th>COMPTE</th><th>TICKER</th>` +
+    cols.map(c => `<th style="color:var(--blue)">${c.toUpperCase()} BUY QTY</th><th style="color:var(--blue)">${c.toUpperCase()} BUY AVG</th><th style="color:var(--red)">${c.toUpperCase()} SELL QTY</th><th style="color:var(--red)">${c.toUpperCase()} SELL AVG</th>`).join('') +
+    `<th>STATUT</th>`;
+
+  let html = `<table><thead><tr>${head}</tr></thead><tbody>`;
+
+  for (const row of rows) {
+    const srcs = cols.map(c => row.src[c] || { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null });
+
+    // Compare first col (chat or seals) vs others
+    const ref = srcs[0];
+    let allOk = true;
+    const flags = [];
+
+    for (let i = 1; i < srcs.length; i++) {
+      const s = srcs[i];
+      if (!qtyMatch(ref.buy_qty, s.buy_qty))   { allOk=false; flags.push(`BUY QTY ${cols[0]}:${ref.buy_qty} vs ${cols[i]}:${s.buy_qty}`); }
+      if (!qtyMatch(ref.sell_qty, s.sell_qty))  { allOk=false; flags.push(`SELL QTY ${cols[0]}:${ref.sell_qty} vs ${cols[i]}:${s.sell_qty}`); }
+      if (!avgClose(ref.buy_avg, s.buy_avg))    { allOk=false; flags.push(`BUY AVG ${cols[0]}:${fmtAvg(ref.buy_avg)} vs ${cols[i]}:${fmtAvg(s.buy_avg)}`); }
+      if (!avgClose(ref.sell_avg, s.sell_avg))  { allOk=false; flags.push(`SELL AVG ${cols[0]}:${fmtAvg(ref.sell_avg)} vs ${cols[i]}:${fmtAvg(s.sell_avg)}`); }
+    }
+
+    const badge = allOk
+      ? '<span class="badge badge-ok">✓ OK</span>'
+      : `<span class="badge badge-err">✗ ÉCART</span><div style="color:var(--red);font-size:10px;margin-top:3px">${flags.join('<br>')}</div>`;
+
+    const cells = srcs.map(s => {
+      const bqOk = qtyMatch(ref.buy_qty, s.buy_qty);
+      const sqOk = qtyMatch(ref.sell_qty, s.sell_qty);
+      const baOk = avgClose(ref.buy_avg, s.buy_avg);
+      const saOk = avgClose(ref.sell_avg, s.sell_avg);
+      return `<td class="${bqOk?'ok':'err'}">${s.buy_qty||'—'}</td>
+              <td class="${baOk?'ok':'err'}">${fmtAvg(s.buy_avg)}</td>
+              <td class="${sqOk?'ok':'err'}">${s.sell_qty||'—'}</td>
+              <td class="${saOk?'ok':'err'}">${fmtAvg(s.sell_avg)}</td>`;
+    }).join('');
+
+    html += `<tr>
+      <td style="color:var(--amber)">${row.account_label}</td>
+      <td style="color:var(--amber);font-weight:bold">${(row.displayTicker||row.ticker).toUpperCase()}</td>
+      ${cells}
+      <td>${badge}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  return html;
+}
+
+// ── CHAT vs VCON ─────────────────────────────────────────────────────────────
+function checkVCON() {
+  if (!Object.keys(parsedChat).length) { alert('Parsez d\'abord le chat (Tab 1).'); return; }
+  const raw = document.getElementById('vcon-input').value;
+  if (!raw.trim()) { alert('Collez les données VCON.'); return; }
+
+  const vcons = parseVCONData(raw);
+  document.getElementById('sb-vcon').textContent = vcons.length + ' lignes';
+
+  const chatAgg  = buildChatAgg();
+  const vconAgg  = buildVCONAgg(vcons);
+
+  // Match chat accounts to vcon recipients
+  const rows = [];
+  const allTickers = new Set();
+
+  for (const [chatKey, chatG] of Object.entries(chatAgg)) {
+    const [account, ticker] = chatKey.split('|');
+    const vconRule = vconRequiredForAccount(account);
+    if (vconRule === 'No' || vconRule === 'EMSX') {
+      rows.push({ account_label: account, ticker,
+        src: { chat: chatG, vcon: { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null, na:true } },
+        na: true, vconRule });
+      continue;
+    }
+
+    // Find matching VCON agg entry (fuzzy account→recipient)
+    const displayTicker = chatG.displayTicker || ticker;
+    const vconEntry = findVCONAggEntry(account, displayTicker, vconAgg);
+    rows.push({ account_label: account, ticker, displayTicker, src: { chat: chatG, vcon: vconEntry || { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null } }, vconRule });
+    allTickers.add(ticker);
+  }
+
+  // Orphan VCON entries not matched to any chat account
+  for (const [vconKey, vconG] of Object.entries(vconAgg)) {
+    const matched = rows.some(r => r.src.vcon === vconG);
+    if (!matched) {
+      const [recip, normT] = vconKey.split('|');
+      rows.push({ account_label: '⚠ '+recip, ticker: normT, displayTicker: vconG.displayTicker || normT, src: { chat: { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null }, vcon: vconG }, orphan: true });
+    }
+  }
+
+  const ok   = rows.filter(r => !r.na && !r.orphan && rowIsOk(r, ['chat','vcon'])).length;
+  const err  = rows.filter(r => !r.na && !r.orphan && !rowIsOk(r, ['chat','vcon'])).length;
+  const na   = rows.filter(r => r.na).length;
+  const orp  = rows.filter(r => r.orphan).length;
+
+  saveVCONResult(ok, err, na + orp); // auto-save to history
+  document.getElementById('vcon-summary').innerHTML = `
+    <div class="summary-stat">PRODUITS: <span class="val" style="color:var(--text)">${rows.length}</span></div>
+    <div class="summary-stat">✓ OK: <span class="val" style="color:var(--green)">${ok}</span></div>
+    <div class="summary-stat">✗ ÉCARTS: <span class="val" style="color:var(--red)">${err}</span></div>
+    <div class="summary-stat">⊘ VCON NON REQUIS: <span class="val" style="color:var(--dim)">${na}</span></div>
+    <div class="summary-stat">⚠ ORPHELINS: <span class="val" style="color:var(--amber)">${orp}</span></div>
+  `;
+  document.getElementById('vcon-detail').innerHTML = renderReconTable(
+    rows.filter(r => !r.na), ['chat','vcon']
+  );
+  document.getElementById('vcon-results-wrap').innerHTML = '';
+}
+
+function normalizeExp(exp) {
+  if (!exp) return '';
+  const m = exp.match(/([A-Z]{3})(\d{2})$/);
+  return m ? m[1]+m[2] : exp.trim();
+}
+
+function extractTimeFromDateTime(raw) {
+  if (!raw) return '';
+  // Handle: "10/4/2026 09:04:58.000" or "13/4/2026 08:14:36.000" or "2026-04-10 09:04:58"
+  const m = raw.match(/(\d{2}:\d{2}:\d{2})/);
+  return m ? m[1] : '';
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEALS → BLOOMBERG TICKER CONVERSION (ported from VBA macro)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const SEALS_FUTURES_MAP = {
+  'FGBL':'RX','FGBM':'OE','FGBS':'DU','FGBX':'UB','FOAT':'OAT','FBTP':'IK',
+  'FDAX':'GX','FESB':'CA','FESX':'VG','SO3':'SFI','FXXP':'SXO','SR3':'SFR',
+  'RTY':'RTY','S0':'0Q','S2':'2Q',
+  '21':'TY','25':'FV','26':'TU','17':'US','UBE':'WN','TN':'UXY',
+  'OGBL':'RX','OGBM':'OE','OGBS':'DU','OBTP':'IK','OOAT':'OAT',
+  'OZN':'TY','OZF':'FV','OZT':'TU','OZB':'US','OUB':'WN',
+  'FCE':'CF','I':'ER','SB':'SB','R':'G','Z':'Z',
+};
+
+const MONTH_TO_LETTER = {
+  'JAN':'F','FEB':'G','MAR':'H','APR':'J','MAY':'K','JUN':'M',
+  'JUL':'N','AUG':'Q','SEP':'U','OCT':'V','NOV':'X','DEC':'Z'
+};
+
+function monthToLetter(mon) {
+  return MONTH_TO_LETTER[mon.toUpperCase().trim().slice(0,3)] || '';
+}
+
+function convertExpiry(expStr) {
+  if (!expStr) return '';
+  const s = String(expStr).replace(/\s/g,'').toUpperCase();
+  if (s.length < 4) return '';
+  let monthPart, yearPart;
+  if (/^\d/.test(s)) {
+    // Format DDMMMYY: "19JUN26" → day=19, month=JUN, year=26
+    // Format DDMMMYYYY: "19JUN2026" → day=19, month=JUN, year=2026
+    // The month is always 3 alpha chars starting at position 2
+    const monthMatch = s.match(/^\d+(\d*?)([A-Z]{3})(\d{2,4})$/);
+    if (monthMatch) {
+      monthPart = monthMatch[2]; // "JUN"
+      yearPart  = monthMatch[3]; // "26" or "2026"
+    } else {
+      // Fallback: first 2 digits = year (old assumption for formats like "26Mar")
+      monthPart = s.slice(2, 5);
+      yearPart  = s.slice(0, 2);
+    }
+  } else {
+    // Format MMMYY: "Jun26" or "JUN2026"
+    monthPart = s.slice(0, 3);
+    yearPart  = s.slice(3);
+  }
+  const mLetter = monthToLetter(monthPart);
+  return mLetter + yearPart.slice(-1); // take last digit of year → e.g. M6
+}
+
+// Parse date string "MM/DD/YY" or "YYYY-MM-DD" or JS Date into { year, month (1-12), day }
+const MONTH_NAMES = {JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
+
+function parseOptDate(val) {
+  if (!val) return null;
+  const s = String(val).trim().toUpperCase();
+  let m;
+  // MM/DD/YY or MM/DD/YYYY or DD/MM/YYYY (European) — if first part > 12, it must be a day
+  if ((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/))) {
+    const a = parseInt(m[1]), b = parseInt(m[2]);
+    const y = parseInt(m[3]);
+    const year = y < 100 ? 2000+y : y;
+    if (a > 12) return { year, month: b, day: a };   // DD/MM/YYYY European
+    return { year, month: a, day: b };                // MM/DD/YYYY American
+  }
+  // YYYY-MM-DD
+  if ((m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/))) {
+    return { year: parseInt(m[1]), month: parseInt(m[2]), day: parseInt(m[3]) };
+  }
+  // DDMMMYY or DDMMMYYYY (SEALS format: "10APR26", "19JUN2026")
+  if ((m = s.match(/^(\d{1,2})([A-Z]{3})(\d{2,4})$/))) {
+    const mon = MONTH_NAMES[m[2]];
+    if (mon) {
+      const y = parseInt(m[3]); return { year: y < 100 ? 2000+y : y, month: mon, day: parseInt(m[1]) };
+    }
+  }
+  // MMMYY or MMMYYYY ("APR26", "APR2026")
+  if ((m = s.match(/^([A-Z]{3})(\d{2,4})$/))) {
+    const mon = MONTH_NAMES[m[1]];
+    if (mon) {
+      const y = parseInt(m[2]); return { year: y < 100 ? 2000+y : y, month: mon, day: 1 };
+    }
+  }
+  const d = new Date(s);
+  if (!isNaN(d)) return { year: d.getFullYear(), month: d.getMonth()+1, day: d.getDate() };
+  return null;
+}
+
+function formatOptDate(d) {
+  if (!d) return '';
+  const mm = String(d.month).padStart(2,'0');
+  const dd = String(d.day).padStart(2,'0');
+  const yy = String(d.year).slice(-2);
+  return `${mm}/${dd}/${yy}`;
+}
+
+function getMonthName(month) {
+  return ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'][month-1] || '';
+}
+
+// Convert SEALS option product code + expiry date + C/P + strike → Bloomberg ticker
+// Port of VBA GetOEXPOptionLetter: maps (weekday, occurrence-in-month) → letter code
+function getOEXPOptionLetter(d) {
+  var wday = (new Date(d.year, d.month-1, d.day)).getDay(); // 0=Sun,1=Mon...6=Sat
+  // Convert to Mon=0...Fri=4
+  var wdayMon = wday === 0 ? 6 : wday - 1;
+  // Count occurrences of same weekday in month up to this day
+  var countOcc = 0;
+  for (var day = 1; day <= d.day; day++) {
+    var wd = (new Date(d.year, d.month-1, day)).getDay();
+    if (wd === wday) countOcc++;
+  }
+  var letters = [
+    ['A','F','K','P','U'],  // Monday
+    ['B','G','L','Q','V'],  // Tuesday
+    ['C','H','M','R','W'],  // Wednesday
+    ['D','I','N','S','X'],  // Thursday
+    ['E','J','O','T',''],   // Friday
+  ];
+  if (wdayMon < 0 || wdayMon > 4) return '';
+  return letters[wdayMon][countOcc-1] || '';
+}
+
+// Port of VBA GetOESXFridayCode
+function getOESXFridayCode(d) {
+  // Weekly Friday OESX: SX5EW + occurrence letter
+  // Reuses same letter mapping as OEXP for Fridays
+  return 'SX5EW' + getOEXPOptionLetter(d);
+}
+
+function sealsProdToBloombergOption(prodCode, expDateStr, callPut, strike) {
+  const p = prodCode.toUpperCase().trim();
+  const d = parseOptDate(expDateStr);
+  const L = callPut.toUpperCase().slice(0,1); // C or P
+  const K = strike; // numeric or string
+
+  if (!d) {
+    if (strike) return p + ' ' + K;
+    return p;
+  }
+
+  // ── Handle SEALS weekly option codes: [2 letters][month][1-5][CP] ─────────
+  // e.g. SCJ1C (week 1, April, Call) + expiry Apr 2026 → SCJ6C (year digit 6)
+  // The week number (1-5) is replaced by the last digit of the expiry year
+  const weeklySealsMatch = p.match(/^([A-Z]{2})([FGHJKMNQUVXZ])([1-5])([CP])$/);
+  if (weeklySealsMatch) {
+    const [, root, monthLetter, , cp] = weeklySealsMatch;
+    const year1 = String(d.year).slice(-1);
+    return `${root}${monthLetter}${year1}${cp} ${K}`;
+  }
+  const mon = getMonthName(d.month);
+  const mL  = monthToLetter(mon);
+  const yy  = String(d.year).slice(-2);
+  const y1  = yy.slice(-1); // last digit of year
+  const fmtDate = formatOptDate(d);
+
+  // Mini S&P / MSCI weeklies (E1C, E2C, E1D, E2D, ...)
+  const weeklyMap = {
+    'E1A': t => `IWWW${mL}${y1}${L}1 ${K}`,
+    'E1B': t => `IMBW${mL}${y1}${L}1 ${K}`,
+    'E1C': t => `ESW${mL}${yy}${L}1 ${K}`,
+    'E1D': t => `IMDW${mL}${y1}${L}1 ${K}`,
+    'EW1': t => `1E${mL}${y1}${L} ${K}`,
+    'E2A': t => `IWWW${mL}${y1}${L}2 ${K}`,
+    'E2B': t => `IMBW${mL}${y1}${L}2 ${K}`,
+    'E2C': t => `ESW${mL}${yy}${L}2 ${K}`,
+    'E2D': t => `IMDW${mL}${y1}${L}2 ${K}`,
+    'EW2': t => `2E${mL}${y1}${L} ${K}`,
+    'E3A': t => `IWWW${mL}${y1}${L}3 ${K}`,
+    'E3B': t => `IMBW${mL}${y1}${L}3 ${K}`,
+    'E3C': t => `ESW${mL}${yy}${L}3 ${K}`,
+    'E3D': t => `IMDW${mL}${y1}${L}3 ${K}`,
+    'EW3': t => `3E${mL}${y1}${L} ${K}`,
+    'E4A': t => `IWWW${mL}${y1}${L}4 ${K}`,
+    'E4B': t => `IMBW${mL}${y1}${L}4 ${K}`,
+    'E4C': t => `ESW${mL}${yy}${L}4 ${K}`,
+    'E4D': t => `IMDW${mL}${y1}${L}4 ${K}`,
+    'EW4': t => `4E${mL}${y1}${L} ${K}`,
+    'E5A': t => `IWWW${mL}${y1}${L}5 ${K}`,
+    'E5B': t => `IMBW${mL}${y1}${L}5 ${K}`,
+    'E5C': t => `ESW${mL}${yy}${L}5 ${K}`,
+    'E5D': t => `IMDW${mL}${y1}${L}5 ${K}`,
+    'EW':  t => `SC${mL}${y1}${L} ${K}`,
+    'ES':  t => `ES${mL}${y1}${L} ${K}`,
+  };
+
+  if (weeklyMap[p]) return weeklyMap[p]();
+
+  // Eurex / Standard options with full date
+  // OEXP: daily expiry SX5E — use SX5EODX letter (GetOEXPOptionLetter)
+  // OESX: weekly/monthly SX5E — if Friday use SX5EWX, else monthly SX5E
+  var oexpLetter = getOEXPOptionLetter(d);
+  var jsDate = new Date(d.year, d.month-1, d.day);
+  var isFriday = jsDate.getDay() === 5;
+  // Check if last business day of month (simplified: last weekday of month)
+  var lastDay = new Date(d.year, d.month, 0); // last day of month
+  while (lastDay.getDay() === 0 || lastDay.getDay() === 6) lastDay.setDate(lastDay.getDate()-1);
+  var isLastBizDay = (d.day === lastDay.getDate() && d.month === lastDay.getMonth()+1);
+
+  var oexpRoot = isLastBizDay ? 'SX5EOM' : ('SX5EOD' + oexpLetter);
+  // oesxRoot removed: OESX always maps to SX5E
+
+  const eurexMap = {
+    'OESX': 'SX5E ' + fmtDate + ' ' + L + K,  // OESX always = SX5E in Bloomberg
+    'OEXP': oexpRoot + ' ' + fmtDate + ' ' + L + K,
+    'OESB': 'SX7E ' + fmtDate + ' ' + L + K,
+    'OXXP': 'SXXP ' + fmtDate + ' ' + L + K,
+    'ODAX': 'DAX ' + fmtDate + ' ' + L + K,
+    'OSMI': 'SMI ' + fmtDate + ' ' + L + K,
+  };
+  if (eurexMap[p]) return eurexMap[p];
+
+  // Treasury options
+  const treasMap = {
+    'OGBL': `RX ${fmtDate} ${L}${K}`,
+    'OGBM': `OE ${fmtDate} ${L}${K}`,
+    'OGBS': `DU ${fmtDate} ${L}${K}`,
+    'OBTP': `IK ${fmtDate} ${L}${K}`,
+    'OOAT': `OAT ${fmtDate} ${L}${K}`,
+    'OZN':  `TY ${fmtDate} ${L}${K}`,
+    'OZF':  `FV ${fmtDate} ${L}${K}`,
+    'OZT':  `TU ${fmtDate} ${L}${K}`,
+    'OZB':  `US ${fmtDate} ${L}${K}`,
+    'OUB':  `WN ${fmtDate} ${L}${K}`,
+  };
+  if (treasMap[p]) return treasMap[p];
+
+  // Fallback: use prod code as-is
+  return `${p} ${fmtDate} ${L}${K}`;
+}
+
+// Convert a SEALS futures row to Bloomberg ticker
+function sealsFutureToBloomberg(prodCode, expiry) {
+  const p = prodCode.trim().toUpperCase();
+  const bloom = SEALS_FUTURES_MAP[p] || p;
+  const exp = convertExpiry(expiry);
+  return bloom + exp;
+}
+
+// Main entry: convert SEALS trade to Bloomberg ticker string
+function sealsTickerToBloomberg(prod, exp, optionType, strike) {
+  const hasStrike = strike !== '' && strike !== undefined && strike !== null;
+  if (hasStrike) {
+    return sealsProdToBloombergOption(prod, exp, optionType, strike);
+  } else {
+    return sealsFutureToBloomberg(prod, exp);
+  }
+}
+
+function parseSEALSData(raw) {
+  const lines = raw.trim().split('\n').filter(l=>l.trim());
+  if (!lines.length) return [];
+  const header = lines[0].split('\t');
+  const idx = {};
+  header.forEach((h,i) => idx[h.trim()] = i);
+
+  const getCol = (cols, ...names) => {
+    for (const n of names) {
+      if (idx[n] !== undefined && cols[idx[n]] !== undefined)
+        return cols[idx[n]]?.trim() || '';
+    }
+    return '';
+  };
+
+  const trades = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split('\t');
+    if (cols.length < 5) continue;
+    const prod      = getCol(cols, 'Prod', 'Product');
+    const expRaw    = getCol(cols, 'Exp', 'Expiry');
+    const exp       = normalizeExp(expRaw);
+    const option    = getCol(cols, 'Option');
+    const strike    = getCol(cols, 'Strike');
+    const vol       = parseFloat(getCol(cols, 'Vol', 'Volume')) || 0;
+    const unrPx     = parseFloat(getCol(cols, 'Unr Price', 'Price', 'Unr_Price')) || 0;
+    const ref       = getCol(cols, 'Giveup Ref 1', 'GiveupRef1');
+    const bs        = getCol(cols, 'B/S');
+    const exch      = getCol(cols, 'Exch', 'Exchange');
+    const client    = getCol(cols, 'Client');
+    const dtRaw     = getCol(cols, 'Trade Date Time', 'TradeDateTime', 'Trade Time');
+    const tradeTime = extractTimeFromDateTime(dtRaw) || dtRaw;
+    // Use VBA macro logic for SEALS→Bloomberg conversion
+    const bbgTicker = sealsTickerToBloomberg(prod, expRaw, option, strike) || sealsToBBG(prod, exp);
+    const isOpt     = !!(option && option !== 'None' && option !== '-' && option !== '');
+    if (!vol || !ref) continue;
+    trades.push({ prod, exp, option, strike, vol, unrPx, ref, bs, exch,
+                  bbgTicker, isOpt, tradeTime, client, row: i });
+  }
+  return trades;
+}
+
+// ── CHAT vs SEALS ─────────────────────────────────────────────────────────────
+function aggregateSEALS(trades) {
+  // Group fills by: ref + ticker + B/S + timestamp-to-the-second (weighted avg price)
+  const groups = {};
+  for (const t of trades) {
+    const timeSec = (t.tradeTime || '').substring(0, 8);
+    const key = `${t.ref}|${t.bbgTicker}|${t.bs}|${timeSec}|${t.isOpt?t.option+t.strike:''}`;
+    if (!groups[key]) groups[key] = { ...t, vol: 0, _sumValue: 0 };
+    groups[key].vol       += t.vol;
+    groups[key]._sumValue += t.vol * t.unrPx;
+  }
+  for (const g of Object.values(groups)) {
+    g.unrPx = g.vol > 0 ? parseFloat((g._sumValue / g.vol).toFixed(7)) : 0;
+  }
+  return Object.values(groups);
+}
+
+function getSEALSMapping(account) {
+  const m = accountMappings[account];
+  if (m && m.sealsRef) return m.sealsRef;
+  if (mappingsSEALS[account]) return mappingsSEALS[account];
+  // Auto-lookup from CLIENT_DB by account name
+  const accountWords = account.toUpperCase().split(/[\s_\-]+/).filter(w=>w.length>2);
+  for (const c of CLIENT_DB) {
+    if (!c.seals) continue;
+    const traderWords = c.trader.toUpperCase().split(/[\s_\-]+/);
+    if (accountWords.some(aw => traderWords.some(tw => tw===aw && tw.length>3))) return c.seals;
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Aggregate helper: groups trades by BBG ticker → buy/sell qty + VWAP
+// Used by both SEALS vs CHAT and SEALS vs VCON
+// ─────────────────────────────────────────────────────────────────────────────
+function aggByProduct(trades, getTicker, getBs, getQty, getPx) {
+  const agg = {};
+  for (const t of trades) {
+    const ticker = (getTicker(t) || '').trim().toUpperCase();
+    if (!ticker) continue;
+    if (!agg[ticker]) agg[ticker] = { ticker, buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0 };
+    const qty = getQty(t), px = getPx(t);
+    if (getBs(t) === 'buy') { agg[ticker].buy_qty  += qty; agg[ticker].buy_sum  += qty * px; }
+    else                    { agg[ticker].sell_qty += qty; agg[ticker].sell_sum += qty * px; }
+  }
+  for (const g of Object.values(agg)) {
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+  return agg;
+}
+
+function renderProductReconTable(leftAgg, rightAgg, leftLabel, rightLabel) {
+  const allTickers = new Set([...Object.keys(leftAgg), ...Object.keys(rightAgg)]);
+  let ok=0, err=0, orp=0;
+  const rows = [];
+
+  for (const ticker of [...allTickers].sort()) {
+    const L = leftAgg[ticker]  || { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null };
+    const R = rightAgg[ticker] || { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null };
+    const onlyLeft  = !rightAgg[ticker];
+    const onlyRight = !leftAgg[ticker];
+    const bqOk = qtyMatch(L.buy_qty,  R.buy_qty);
+    const sqOk = qtyMatch(L.sell_qty, R.sell_qty);
+    const baOk = avgClose(L.buy_avg,  R.buy_avg);
+    const saOk = avgClose(L.sell_avg, R.sell_avg);
+    const allOk = bqOk && sqOk && baOk && saOk;
+
+    if (onlyLeft || onlyRight) orp++;
+    else if (allOk) ok++;
+    else err++;
+
+    const flags = [];
+    if (!bqOk) flags.push(`BUY QTY ${leftLabel}:${L.buy_qty||0} ${rightLabel}:${R.buy_qty||0}`);
+    if (!sqOk) flags.push(`SELL QTY ${leftLabel}:${L.sell_qty||0} ${rightLabel}:${R.sell_qty||0}`);
+    if (!baOk) flags.push(`BUY AVG ${leftLabel}:${fmtAvg(L.buy_avg)} ${rightLabel}:${fmtAvg(R.buy_avg)}`);
+    if (!saOk) flags.push(`SELL AVG ${leftLabel}:${fmtAvg(L.sell_avg)} ${rightLabel}:${fmtAvg(R.sell_avg)}`);
+
+    const badge = onlyLeft
+      ? `<span class="badge badge-warn">⚠ ${leftLabel} SEUL</span>`
+      : onlyRight
+        ? `<span class="badge badge-warn">⚠ ${rightLabel} SEUL</span>`
+        : allOk
+          ? '<span class="badge badge-ok">✓ OK</span>'
+          : `<span class="badge badge-err">✗ ÉCART</span><div style="color:var(--red);font-size:10px;margin-top:3px">${flags.join('<br>')}</div>`;
+
+    rows.push({ ticker, L, R, bqOk, sqOk, baOk, saOk, badge });
+  }
+
+  let html = `<table><thead><tr>
+    <th>PRODUIT</th>
+    <th style="color:var(--blue)">${leftLabel} BUY QTY</th>
+    <th style="color:var(--blue)">${leftLabel} BUY AVG</th>
+    <th style="color:var(--red)">${leftLabel} SELL QTY</th>
+    <th style="color:var(--red)">${leftLabel} SELL AVG</th>
+    <th style="color:var(--blue)">${rightLabel} BUY QTY</th>
+    <th style="color:var(--blue)">${rightLabel} BUY AVG</th>
+    <th style="color:var(--red)">${rightLabel} SELL QTY</th>
+    <th style="color:var(--red)">${rightLabel} SELL AVG</th>
+    <th>STATUT</th>
+  </tr></thead><tbody>`;
+
+  for (const r of rows) {
+    html += `<tr>
+      <td style="color:var(--amber);font-weight:bold">${r.ticker}</td>
+      <td class="${r.bqOk?'ok':'err'}">${r.L.buy_qty||'—'}</td>
+      <td class="${r.baOk?'ok':'err'}">${fmtAvg(r.L.buy_avg)}</td>
+      <td class="${r.sqOk?'ok':'err'}">${r.L.sell_qty||'—'}</td>
+      <td class="${r.saOk?'ok':'err'}">${fmtAvg(r.L.sell_avg)}</td>
+      <td class="${r.bqOk?'ok':'err'}">${r.R.buy_qty||'—'}</td>
+      <td class="${r.baOk?'ok':'err'}">${fmtAvg(r.R.buy_avg)}</td>
+      <td class="${r.sqOk?'ok':'err'}">${r.R.sell_qty||'—'}</td>
+      <td class="${r.saOk?'ok':'err'}">${fmtAvg(r.R.sell_avg)}</td>
+      <td>${r.badge}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  return { html, ok, err, orp };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEALS vs CHAT
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Consistent ticker key for matching (same normalization on both sides) ────
+function normTickerForKey(t) {
+  t = (t || '').trim().toUpperCase();
+  if (!t) return '';
+  if (isOptionTicker(t)) {
+    // Strip date pattern MM/DD/YY if present, then replace spaces with _
+    // Keeps full ticker+strike intact: IWWWJ6P2 6700 → IWWWJ6P2_6700
+    var s = t.replace(/\d{2}\/\d{2}\/\d{2}\s*/g, '').trim();
+    return s.replace(/\s+/g, '_');
+  }
+  // Futures: strip expiry month code + year digit (VGM6 → VG, RXH6 → RX)
+  return getShortTicker(t);
+}
+
+function checkSEALS() {
+  const raw = document.getElementById('seals-input').value;
+  if (!raw.trim()) { alert('Collez les données SEALS.'); return; }
+  if (!Object.keys(parsedChat).length) { alert('Parsez le chat d\'abord (Tab 1).'); return; }
+
+  const sealsTrades = parseSEALSData(raw);
+
+  // Aggregate SEALS by normalized BBG ticker (same normalization as CHAT)
+  const sealsAgg = aggByProduct(
+    sealsTrades,
+    t => normTickerForKey(t.bbgTicker),
+    t => t.bs === 'Buy' ? 'buy' : 'sell',
+    t => t.vol,
+    t => t.unrPx
+  );
+
+  // Aggregate CHAT by normalized ticker
+  const chatTrades = Object.values(parsedChat).flat();
+  const chatAgg = aggByProduct(
+    chatTrades,
+    t => normTickerForKey(t.ticker),
+    t => t.side === '+' ? 'buy' : 'sell',
+    t => t.qty,
+    t => t.priceNum
+  );
+
+  const { html, ok, err, orp } = renderProductReconTable(sealsAgg, chatAgg, 'SEALS', 'CHAT');
+
+  saveSEALSResult(ok, err);
+  document.getElementById('seals-summary').innerHTML = `
+    <div class="summary-stat">PRODUITS: <span class="val" style="color:var(--text)">${ok+err+orp}</span></div>
+    <div class="summary-stat">✓ OK: <span class="val" style="color:var(--green)">${ok}</span></div>
+    <div class="summary-stat">✗ ÉCARTS: <span class="val" style="color:var(--red)">${err}</span></div>
+    <div class="summary-stat">⚠ SEUL CÔTÉ: <span class="val" style="color:var(--amber)">${orp}</span></div>
+    <div class="sublabel" style="margin-top:6px;color:var(--dim)">Agrégé par produit · buy/sell qty + prix moyen pondéré</div>
+  `;
+  document.getElementById('seals-detail').innerHTML = html;
+  document.getElementById('seals-results-wrap').innerHTML = '';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEALS vs VCON
+// ─────────────────────────────────────────────────────────────────────────────
+function checkSEALSvsVCON() {
+  const sealsRaw = document.getElementById('seals-input').value;
+  const vconRaw  = document.getElementById('vcon-input').value;
+  if (!sealsRaw.trim()) { alert('Collez SEALS.'); return; }
+  if (!vconRaw.trim())  { alert('Collez VCON.'); return; }
+
+  const sealsTrades = parseSEALSData(sealsRaw);
+  const vcons       = parseVCONData(vconRaw);
+
+  // Aggregate SEALS by normalized BBG ticker
+  const sealsAgg = aggByProduct(
+    sealsTrades,
+    t => normTickerForKey(t.bbgTicker),
+    t => t.bs === 'Buy' ? 'buy' : 'sell',
+    t => t.vol,
+    t => t.unrPx
+  );
+
+  // Aggregate VCON by normalized security ticker (same normalization as SEALS)
+  const vconAgg = aggByProduct(
+    vcons,
+    v => normTickerForKey((v.security && v.security.length > (v.ticker||'').length) ? v.security : (v.ticker || v.security || '')),
+    v => v.bs === 'S' ? 'buy' : 'sell',
+    v => v.qty,
+    v => v.price
+  );
+
+  const { html, ok, err, orp } = renderProductReconTable(sealsAgg, vconAgg, 'SEALS', 'VCON');
+
+  saveSEALSResult(ok, err);
+  document.getElementById('seals-summary').innerHTML = `
+    <div class="summary-stat">PRODUITS: <span class="val" style="color:var(--text)">${ok+err+orp}</span></div>
+    <div class="summary-stat">✓ OK: <span class="val" style="color:var(--green)">${ok}</span></div>
+    <div class="summary-stat">✗ ÉCARTS: <span class="val" style="color:var(--red)">${err}</span></div>
+    <div class="summary-stat">⚠ SEUL CÔTÉ: <span class="val" style="color:var(--amber)">${orp}</span></div>
+    <div class="sublabel" style="margin-top:6px;color:var(--dim)">Agrégé par produit · tous fills SEALS · fuseaux ignorés</div>
+  `;
+  document.getElementById('seals-detail').innerHTML = html;
+  document.getElementById('seals-results-wrap').innerHTML = '';
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = type === 'ok' ? 'var(--green)' : type === 'err' ? 'var(--red)' : 'var(--amber)';
+}
+
+function rowIsOk(row, sides) {
+  const s = sides[0], v = sides[1];
+  const L = row.src[s] || {}, R = row.src[v] || {};
+  return qtyMatch(L.buy_qty||0, R.buy_qty||0) &&
+         qtyMatch(L.sell_qty||0, R.sell_qty||0) &&
+         avgClose(L.buy_avg, R.buy_avg) &&
+         avgClose(L.sell_avg, R.sell_avg);
+}
+
+function findVCONAggEntry(account, ticker, vconAgg) {
+  const { ref: sealsRef } = recipientToSealsRef(account, ticker);
+  const normTicker = normTickerForKey(ticker);  // preserves strike for options
+  const key = sealsRef + '|' + normTicker;
+  return vconAgg[key] || null;
+}
+
+function findSEALSAggEntry(account, ticker, sealsAgg) {
+  const normTicker = normalizeTickerForMatch(getShortTicker(ticker));
+  for (const [key, g] of Object.entries(sealsAgg)) {
+    const [, sTicker] = key.split('|');
+    if (sTicker === normTicker) return g;
+  }
+  return null;
+}
+
+function autoDetectMappings() {
+  // Auto-detect from account name using CLIENT_DB
+  for (const acc of Object.keys(parsedChat)) {
+    if (accountMappings[acc]) continue;
+    const accUp = acc.toUpperCase();
+    for (let i = 0; i < CLIENT_DB.length; i++) {
+      const c = CLIENT_DB[i];
+      const traderWords = c.trader.toUpperCase().split(/[\s_\-,]+/);
+      const accWords = accUp.split(/[\s_\-,]+/).filter(w => w.length > 2);
+      if (accWords.some(aw => traderWords.some(tw => tw === aw && tw.length > 2))) {
+        accountMappings[acc] = { clientIdx: i, sealsRef: c.seals, vconRecipient: '' };
+        if (c.seals) mappingsSEALS[acc] = c.seals;
+        break;
+      }
+    }
+  }
+}
+
+function renderMappingUI() {
+  const accounts = Object.keys(parsedChat);
+  const container = document.getElementById('mapping-accounts-container');
+  if (!container) return;
+  if (!accounts.length) {
+    container.innerHTML = '<div class="sublabel" style="color:var(--amber)">⚠ Parsez d\'abord le chat (Tab 1) pour voir les comptes.</div>';
+  } else {
+    const opts = CLIENT_DB.map((c,i) =>
+      `<option value="${i}">${c.entity} | ${c.trader} | ${c.category} | VCON:${c.vcon||'?'}</option>`
+    ).join('');
+    let html = `<table style="width:100%;font-family:var(--mono);font-size:11px;border-collapse:collapse">
+      <thead><tr>
+        <th style="background:var(--bg3);color:var(--amber);padding:6px 10px;font-size:10px">COMPTE CHAT</th>
+        <th style="background:var(--bg3);color:var(--amber);padding:6px 10px;font-size:10px">CLIENT</th>
+        <th style="background:var(--bg3);color:var(--amber);padding:6px 10px;font-size:10px">VCON</th>
+        <th style="background:var(--bg3);color:var(--amber);padding:6px 10px;font-size:10px">SEALS REF</th>
+      </tr></thead><tbody>`;
+    for (const acc of accounts) {
+      const m = accountMappings[acc] || {};
+      const selIdx = m.clientIdx !== undefined ? m.clientIdx : -1;
+      const client = selIdx >= 0 ? CLIENT_DB[selIdx] : null;
+      const vconBadgeHtml = client ? vconBadge(client.vcon) : '<span class="badge badge-warn">?</span>';
+      html += `<tr>
+        <td style="padding:6px 10px;color:var(--amber);font-weight:bold;border-bottom:1px solid var(--bg3)">${acc}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid var(--bg3)">
+          <select id="sel-client-${acc}" style="background:var(--bg2);border:1px solid var(--dim);color:var(--text);font-family:var(--mono);font-size:10px;padding:3px;width:100%" onchange="onClientSelect('${acc}')">
+            <option value="-1">— sélectionner —</option>${opts}
+          </select>
+        </td>
+        <td style="padding:6px 10px;border-bottom:1px solid var(--bg3)" id="vcon-badge-${acc}">${vconBadgeHtml}</td>
+        <td style="padding:6px 10px;border-bottom:1px solid var(--bg3)">
+          <input type="text" id="seals-ref-${acc}" value="${m.sealsRef || ''}" placeholder="Giveup Ref" style="width:100%">
+        </td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    for (const acc of accounts) {
+      const m = accountMappings[acc] || {};
+      if (m.clientIdx !== undefined && m.clientIdx >= 0) {
+        const sel = document.getElementById('sel-client-'+acc);
+        if (sel) sel.value = m.clientIdx;
+      }
+    }
+  }
+  renderClientDBTable(CLIENT_DB);
+  const tm = document.getElementById('ticker-map-display');
+  if (tm) tm.innerHTML = Object.entries(SEALS_BBG).map(([k,v])=>
+    `<span style="color:var(--amber)">${k}</span> → <span style="color:var(--text)">${v}</span>&nbsp;&nbsp;&nbsp;`
+  ).join('');
+}
+
+function vconBadge(vcon) {
+  if (!vcon || vcon==='') return '<span class="badge badge-warn">?</span>';
+  if (vcon==='No')     return '<span class="badge badge-err">⊘ NON REQUIS</span>';
+  if (vcon==='Yes')    return '<span class="badge badge-ok">✓ REQUIS</span>';
+  if (vcon==='Yes MSF') return '<span class="badge badge-ok">✓ MSF</span>';
+  if (vcon==='EMSX')   return '<span class="badge badge-info">EMSX</span>';
+  return `<span class="badge badge-warn">${vcon}</span>`;
+}
+
+function onClientSelect(acc) {
+  const sel = document.getElementById('sel-client-'+acc);
+  const idx = parseInt(sel.value);
+  const client = idx >= 0 ? CLIENT_DB[idx] : null;
+  const badge = document.getElementById('vcon-badge-'+acc);
+  if (badge) badge.innerHTML = client ? vconBadge(client.vcon) : '<span class="badge badge-warn">?</span>';
+  const sealsInput = document.getElementById('seals-ref-'+acc);
+  if (sealsInput && client && !sealsInput.value) sealsInput.value = client.seals;
+  if (!accountMappings[acc]) accountMappings[acc] = {};
+  accountMappings[acc].clientIdx = idx;
+}
+
+function saveMappings() {
+  for (const acc of Object.keys(parsedChat)) {
+    if (!accountMappings[acc]) accountMappings[acc] = {};
+    const sel = document.getElementById('sel-client-'+acc);
+    if (sel) accountMappings[acc].clientIdx = parseInt(sel.value);
+    const sr = document.getElementById('seals-ref-'+acc);
+    if (sr) { accountMappings[acc].sealsRef = sr.value.trim(); mappingsSEALS[acc] = sr.value.trim(); }
+  }
+  setStatus('parse-status', '✓ Mappings sauvegardés', 'ok');
+}
+
+function renderClientDBTable(data) {
+  const wrap = document.getElementById('client-db-table');
+  if (!wrap) return;
+  let html = `<table><thead><tr><th>ENTITY</th><th>CATÉGORIE</th><th>TRADER</th><th>VCON</th><th>SEALS REF</th></tr></thead><tbody>`;
+  for (const c of data) {
+    html += `<tr><td style="color:var(--blue)">${c.entity}</td><td>${c.category}</td><td>${c.trader}</td><td>${vconBadge(c.vcon)}</td><td style="color:var(--dim)">${c.seals}</td></tr>`;
+  }
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function filterClientDB() {
+  const q = (document.getElementById('client-search')?.value || '').toLowerCase();
+  const filtered = q ? CLIENT_DB.filter(c =>
+    c.entity.toLowerCase().includes(q) || c.trader.toLowerCase().includes(q) ||
+    c.seals.toLowerCase().includes(q)  || c.category.toLowerCase().includes(q)
+  ) : CLIENT_DB;
+  renderClientDBTable(filtered);
+}
+
+function copyOutput() {
+  navigator.clipboard.writeText(lastAllDay).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = lastAllDay; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+
+function expandOutput() {
+  document.getElementById('modal-content').textContent = lastAllDay;
+  document.getElementById('modal').style.display = 'block';
+}
+
+function clearChat() {
+  document.getElementById('chat-input').value = '';
+  document.getElementById('chat-output').innerHTML = 'En attente du parsing...';
+  document.getElementById('parsed-table-wrap').innerHTML = '';
+  parsedChat = {}; lastAllDay = '';
+  ['hdr-accounts','hdr-trades'].forEach(id => document.getElementById(id).textContent = '—');
+  ['sb-accounts','sb-trades'].forEach(id => document.getElementById(id).textContent = '0');
+  setStatus('parse-status','','ok');
+}
+
+function checkSEALSvsVCONDirect() {
+  var sealsRaw = document.getElementById('seals-input-2').value;
+  var vconRaw  = document.getElementById('seals-vcon-input').value;
+  if (!sealsRaw.trim()) { alert('Collez les données SEALS.'); return; }
+  if (!vconRaw.trim())  { alert('Collez les données VCON Bloomberg.'); return; }
+  // Warn if same data pasted in both fields
+  if (sealsRaw.trim() === vconRaw.trim()) {
+    alert('⚠ SEALS et VCON contiennent les mêmes données !\n\nLe champ VCON doit contenir l\'export Bloomberg VCON (colonnes BS, Amount, Security, Recipient...)\nPas les données SEALS.');
+    return;
+  }
+
+  var sealsTrades = parseSEALSData(sealsRaw);
+  var vcons       = parseVCONData(vconRaw);
+
+  // ── 1. Aggregate SEALS by client col + normTicker ─────────────────────────
+  var sealsGroups = {}; // "CLIENTCOL|ticker" → { client, ticker, dbEntry, buy/sell ... }
+  for (var i = 0; i < sealsTrades.length; i++) {
+    var t = sealsTrades[i];
+    var clientCol = (t.client || '').toUpperCase().trim();
+    var ticker = normTickerForKey(t.bbgTicker);
+    if (!ticker || !clientCol) continue;
+
+    // Find CLIENT_DB entry for this SEALS account
+    var dbEntry = findClientDBBySealsRef(clientCol);
+
+    // Skip if VCON=No
+    if (dbEntry && dbEntry.vcon === 'No') continue;
+
+    var key = clientCol + '|' + ticker;
+    if (!sealsGroups[key]) sealsGroups[key] = {
+      client: clientCol, ticker: ticker, displayTicker: t.bbgTicker || ticker, dbEntry: dbEntry,
+      buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0
+    };
+    var qty = t.vol, px = t.unrPx;
+    if (t.bs === 'Buy') { sealsGroups[key].buy_qty += qty; sealsGroups[key].buy_sum += qty*px; }
+    else                { sealsGroups[key].sell_qty += qty; sealsGroups[key].sell_sum += qty*px; }
+  }
+  var sgKeys = Object.keys(sealsGroups);
+  for (var i = 0; i < sgKeys.length; i++) {
+    var g = sealsGroups[sgKeys[i]];
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+
+  // ── 2. Aggregate VCON by recipient+DealerNotes + normTicker ───────────────
+  // Key: resolved trader name (from CLIENT_DB via recipient) + ticker
+  var vconGroups = {}; // "TRADERNAME|ticker" → { trader, ticker, buy/sell ... }
+  for (var i = 0; i < vcons.length; i++) {
+    var v = vcons[i];
+    var rawName = resolveVCONClient(v); // DealerNotes first, then recipient
+    var rawTicker = (v.security && v.security.length > (v.ticker||'').length) ? v.security : (v.ticker || v.security || '');
+    var ticker = normTickerForKey(rawTicker);
+    if (!ticker) continue;
+    // Normalize name: strip trailing ellipsis/dots (Bloomberg truncation: "VALLABH…" → "VALLABH")
+    var nameKey = rawName.toUpperCase().trim().replace(/[…\.]+$/, '').replace(/…/g, '').trim();
+    var key = nameKey + '|' + ticker;
+    if (!vconGroups[key]) vconGroups[key] = {
+      nameKey: nameKey, ticker: ticker, displayTicker: rawTicker.toUpperCase().trim(),
+      buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0
+    };
+    var qty = v.qty, px = v.price;
+    if (v.bs === 'S') { vconGroups[key].buy_qty += qty; vconGroups[key].buy_sum += qty*px; }
+    else              { vconGroups[key].sell_qty += qty; vconGroups[key].sell_sum += qty*px; }
+  }
+  var vgKeys = Object.keys(vconGroups);
+  for (var i = 0; i < vgKeys.length; i++) {
+    var g = vconGroups[vgKeys[i]];
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+
+  // ── 3. Match: for each SEALS group, find its VCON via CLIENT_DB trader name
+  // DEBUG
+  var _dbgSeals = sgKeys.slice(0,5).join(' | ');
+  var _dbgVcon  = vgKeys.slice(0,5).join(' | ');
+  console.log('[TRT] SEALS keys:', _dbgSeals);
+  console.log('[TRT] VCON keys:', _dbgVcon);
+
+  var usedVconKeys = {};
+  var rows = [];
+  var ok = 0, err = 0, orp = 0;
+
+  for (var i = 0; i < sgKeys.length; i++) {
+    var sk = sgKeys[i];
+    var sg = sealsGroups[sk];
+    var dbEntry = sg.dbEntry;
+    var trader  = dbEntry ? dbEntry.trader.toUpperCase().trim() : null;
+
+    // Find VCON group: same ticker, whose name key matches this trader
+    var vconMatch = null;
+    for (var j = 0; j < vgKeys.length; j++) {
+      var vk = vgKeys[j];
+      if (usedVconKeys[vk]) continue;
+      var vg = vconGroups[vk];
+      if (vg.ticker !== sg.ticker) continue;
+      if (trader && vconNameMatchesTrader(vg.nameKey, trader, dbEntry)) {
+        vconMatch = vg;
+        usedVconKeys[vk] = true;
+        break;
+      }
+    }
+
+    var vg = vconMatch || {buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null};
+    var bqOk = qtyMatch(sg.buy_qty, vg.buy_qty);
+    var sqOk = qtyMatch(sg.sell_qty, vg.sell_qty);
+    var baOk = avgClose(sg.buy_avg, vg.buy_avg);
+    var saOk = avgClose(sg.sell_avg, vg.sell_avg);
+    var allOk = bqOk && sqOk && baOk && saOk;
+
+    if (!vconMatch) orp++; else if (allOk) ok++; else err++;
+
+    var flags = [];
+    if (!bqOk) flags.push('BUY QTY S:' + (sg.buy_qty||0) + ' V:' + (vg.buy_qty||0));
+    if (!sqOk) flags.push('SELL QTY S:' + (sg.sell_qty||0) + ' V:' + (vg.sell_qty||0));
+    if (!baOk) flags.push('BUY AVG S:' + fmtAvg(sg.buy_avg) + ' V:' + fmtAvg(vg.buy_avg));
+    if (!saOk) flags.push('SELL AVG S:' + fmtAvg(sg.sell_avg) + ' V:' + fmtAvg(vg.sell_avg));
+
+    rows.push({
+      sealsClient: sg.client,
+      trader: dbEntry ? dbEntry.trader : '? NON MAPPÉ',
+      entity: dbEntry ? dbEntry.entity : '',
+      ticker: sg.ticker.toUpperCase(),
+      displayTicker: sg.displayTicker || sg.ticker,
+      vconName: vconMatch ? vconMatch.nameKey : '—',
+      sg: sg, vg: vg,
+      bqOk:bqOk, sqOk:sqOk, baOk:baOk, saOk:saOk, allOk:allOk, flags:flags,
+      noDb: !dbEntry, vconMatch: !!vconMatch
+    });
+  }
+
+  // Orphan VCONs (VCON exists but no SEALS matched)
+  for (var i = 0; i < vgKeys.length; i++) {
+    var vk = vgKeys[i];
+    if (!usedVconKeys[vk]) {
+      var vg = vconGroups[vk];
+      // Only show if this corresponds to a vcon=Yes client
+      var dbE = findClientDBByTraderName(vg.nameKey);
+      if (dbE && dbE.vcon === 'No') continue;
+      orp++;
+      rows.push({
+        sealsClient:'— MANQUANT', trader: vg.nameKey, entity:'',
+        ticker: vg.ticker.toUpperCase(),
+        displayTicker: (vg.displayTicker || vg.ticker).toUpperCase(),
+        vconName: vg.nameKey, sg:null, vg:vg,
+        bqOk:false, sqOk:false, baOk:false, saOk:false, allOk:false,
+        flags:['VCON SANS SEALS'], vconMatch:true, orphanVcon:true
+      });
+    }
+  }
+
+  // ── 4. Render ─────────────────────────────────────────────────────────────
+  var summaryEl = document.getElementById('seals-vcon-summary');
+  summaryEl.style.display = 'flex';
+  summaryEl.innerHTML =
+    '<div class="summary-stat">LIGNES: <span class="val" style="color:var(--text)">' + rows.length + '</span></div>' +
+    '<div class="summary-stat">\u2713 OK: <span class="val" style="color:var(--green)">' + ok + '</span></div>' +
+    '<div class="summary-stat">\u2717 \u00c9CARTS: <span class="val" style="color:var(--red)">' + err + '</span></div>' +
+    '<div class="summary-stat">\u26a0 SEUL C\u00d4T\u00c9: <span class="val" style="color:var(--amber)">' + orp + '</span></div>' +
+    '<div class="sublabel" style="margin-top:6px;color:var(--dim)">SEALS-first \u00b7 VCON=No ignor\u00e9s \u00b7 DealerNotes actif</div>';
+
+  var html = '<table><thead><tr>' +
+    '<th>COMPTE SEALS</th><th>TRADER</th><th>PRODUIT</th>' +
+    '<th style="color:var(--blue)">SEALS BUY</th><th style="color:var(--blue)">SEALS B.AVG</th>' +
+    '<th style="color:var(--red)">SEALS SELL</th><th style="color:var(--red)">SEALS S.AVG</th>' +
+    '<th style="color:var(--blue)">VCON BUY</th><th style="color:var(--blue)">VCON B.AVG</th>' +
+    '<th style="color:var(--red)">VCON SELL</th><th style="color:var(--red)">VCON S.AVG</th>' +
+    '<th>STATUT</th></tr></thead><tbody>';
+
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var s = r.sg || {buy_qty:0,sell_qty:0,buy_avg:null,sell_avg:null};
+    var v = r.vg || {buy_qty:0,sell_qty:0,buy_avg:null,sell_avg:null};
+    var badge;
+    if (r.orphanVcon) {
+      badge = '<span class="badge badge-warn">\u26a0 VCON SEUL</span>';
+    } else if (!r.vconMatch) {
+      badge = '<span class="badge badge-warn">\u26a0 VCON MANQUANT</span>';
+    } else if (r.noDb) {
+      badge = '<span class="badge badge-warn">\u26a0 NON MAPP\u00c9</span>';
+    } else if (r.allOk) {
+      badge = '<span class="badge badge-ok">\u2713 OK</span>';
+    } else {
+      badge = '<span class="badge badge-err">\u2717 \u00c9CART</span>';
+      if (r.flags.length) badge += '<div style="color:var(--red);font-size:10px;margin-top:3px">' + r.flags.join('<br>') + '</div>';
+    }
+    html += '<tr>' +
+      '<td style="color:var(--amber);font-size:10px;max-width:180px;word-break:break-all">' + r.sealsClient + '</td>' +
+      '<td style="color:var(--blue);font-size:10px">' + r.trader + '</td>' +
+      '<td style="font-weight:bold">' + (r.displayTicker||r.ticker) + '</td>' +
+      '<td class="' + (r.bqOk?'ok':'err') + '">' + (s.buy_qty||'\u2014') + '</td>' +
+      '<td class="' + (r.baOk?'ok':'err') + '">' + fmtAvg(s.buy_avg) + '</td>' +
+      '<td class="' + (r.sqOk?'ok':'err') + '">' + (s.sell_qty||'\u2014') + '</td>' +
+      '<td class="' + (r.saOk?'ok':'err') + '">' + fmtAvg(s.sell_avg) + '</td>' +
+      '<td class="' + (r.bqOk?'ok':'err') + '">' + (v.buy_qty||'\u2014') + '</td>' +
+      '<td class="' + (r.baOk?'ok':'err') + '">' + fmtAvg(v.buy_avg) + '</td>' +
+      '<td class="' + (r.sqOk?'ok':'err') + '">' + (v.sell_qty||'\u2014') + '</td>' +
+      '<td class="' + (r.saOk?'ok':'err') + '">' + fmtAvg(v.sell_avg) + '</td>' +
+      '<td>' + badge + '</td></tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('seals-detail').innerHTML = html;
+}
+
+// Find CLIENT_DB entry whose seals ref matches (or is contained in) a SEALS client column
+function findClientDBBySealsRef(clientCol) {
+  clientCol = clientCol.toUpperCase();
+  var best = null, bestLen = 0;
+  for (var i = 0; i < CLIENT_DB.length; i++) {
+    var c = CLIENT_DB[i];
+    if (!c.seals) continue;
+    var ref = c.seals.toUpperCase();
+    // SEALS client col should start with or equal the seals ref
+    if (clientCol === ref || clientCol.indexOf(ref) === 0 || ref.indexOf(clientCol) === 0) {
+      if (ref.length > bestLen) { best = c; bestLen = ref.length; }
+    }
+  }
+  return best;
+}
+
+// Find CLIENT_DB entry by trader name (for orphan VCON check)
+function findClientDBByTraderName(nameKey) {
+  nameKey = nameKey.toUpperCase();
+  for (var i = 0; i < CLIENT_DB.length; i++) {
+    var c = CLIENT_DB[i];
+    var trader = c.trader.toUpperCase();
+    if (nameKey === trader || nameKey.indexOf(trader) >= 0 || trader.indexOf(nameKey) >= 0) return c;
+  }
+  return null;
+}
+
+// Check if a VCON name key matches the expected trader from CLIENT_DB
+function vconNameMatchesTrader(vconNameKey, traderUpper, dbEntry) {
+  // Strip Bloomberg truncation ellipsis from both sides
+  vconNameKey = vconNameKey.toUpperCase().replace(/[…\.]+/g, '').trim();
+  traderUpper = traderUpper.toUpperCase().replace(/[…\.]+/g, '').trim();
+  // Direct match
+  if (vconNameKey === traderUpper) return true;
+  // VCON name contains trader last name (e.g. "DALMEIDA" in "ROBERT DALMEIDA")
+  var traderWords = traderUpper.split(/\s+/).filter(function(w){return w.length > 3;});
+  var vconWords   = vconNameKey.split(/\s+/).filter(function(w){return w.length > 3;});
+  // ALL trader words must match a vcon word (avoid false positives)
+  if (traderWords.length > 0 && traderWords.every(function(tw){
+    return vconWords.some(function(vw){ return vw === tw || vw.indexOf(tw)===0 || tw.indexOf(vw)===0; });
+  })) return true;
+  // DealerNotes alias match (e.g. notes='GARY' → trader Gary Sloan)
+  if (dbEntry && dbEntry.notes) {
+    var notes = dbEntry.notes.toUpperCase();
+    if (vconNameKey.indexOf(notes) >= 0 || notes.indexOf(vconNameKey) >= 0) return true;
+  }
+  return false;
+}
+
+function checkGlobal() {
+  const vconRaw  = document.getElementById('global-vcon-input').value;
+  const sealsRaw = document.getElementById('global-seals-input').value;
+  if (!vconRaw.trim())  { alert('Collez les VCONs.'); return; }
+  if (!sealsRaw.trim()) { alert('Collez le SEALS.'); return; }
+
+  const vcons       = parseVCONData(vconRaw);
+  const sealsTrades = parseSEALSData(sealsRaw);
+
+  // ── 1. Aggregate SEALS by CLIENT column + normTicker ─────────────────────
+  // Each SEALS client account is kept separate (e.g. "MSD ANCO CENTIVA TOSIN NEW")
+  const sealsAgg = {}; // "CLIENTCOL|ticker" → { sealsRef, ticker, buy/sell qty/sum/avg }
+  for (const t of sealsTrades) {
+    const clientCol = (t.client || t.ref || '').toUpperCase().trim();
+    const ticker    = normTickerForKey(t.bbgTicker);
+    if (!ticker || !clientCol) continue;
+    const key = clientCol + '|' + ticker;
+    if (!sealsAgg[key]) sealsAgg[key] = {
+      sealsRef: clientCol, ticker,
+      buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0
+    };
+    const qty = t.vol, px = t.unrPx;
+    if (t.bs === 'Buy') { sealsAgg[key].buy_qty += qty; sealsAgg[key].buy_sum += qty*px; }
+    else                { sealsAgg[key].sell_qty += qty; sealsAgg[key].sell_sum += qty*px; }
+  }
+  for (const g of Object.values(sealsAgg)) {
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+
+  // ── 2. Aggregate VCON by resolved SEALS ref + normTicker ─────────────────
+  // resolveVCONClient: uses DealerNotes override first, then recipient name
+  // recipientToSealsRef: maps trader name → CLIENT_DB → seals ref
+  const vconAgg = {}; // "SEALSREF|ticker" → { sealsRef, resolvedAs, ticker, ... }
+  let skippedNo = 0;
+  for (const v of vcons) {
+    const rawName = resolveVCONClient(v); // DealerNotes override or recipient
+    const rawTicker = v.ticker || v.security || '';
+    const ticker = normTickerForKey(rawTicker);
+    if (!ticker) continue;
+
+    const { ref: sealsRef } = recipientToSealsRef(rawName, rawTicker);
+
+    // Check if VCON required for this ref
+    const dbEntry = CLIENT_DB.find(c => c.seals.toUpperCase() === sealsRef.toUpperCase());
+    if (dbEntry && dbEntry.vcon === 'No') { skippedNo++; continue; }
+
+    const key = sealsRef.toUpperCase() + '|' + ticker;
+    if (!vconAgg[key]) vconAgg[key] = {
+      sealsRef: sealsRef.toUpperCase(), resolvedAs: rawName, ticker,
+      buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0
+    };
+    const qty = v.qty, px = v.price;
+    // VCON S = we buy; VCON B = we sell
+    if (v.bs === 'S') { vconAgg[key].buy_qty += qty; vconAgg[key].buy_sum += qty*px; }
+    else              { vconAgg[key].sell_qty += qty; vconAgg[key].sell_sum += qty*px; }
+  }
+  for (const g of Object.values(vconAgg)) {
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+  }
+
+  // ── 3. Match: for each VCON sealsRef+ticker, find SEALS client col ────────
+  // VCON sealsRef (from CLIENT_DB) should match start of SEALS client column
+  const usedSealsKeys = new Set();
+  const rows = [];
+  let ok = 0, err = 0, orp = 0;
+
+  for (const [vk, vg] of Object.entries(vconAgg)) {
+    const [vRef, ticker] = vk.split('|');
+
+    // Find SEALS entry: same ticker, SEALS client col starts with vRef
+    let sealsMatch = null;
+    for (const [sk, sg] of Object.entries(sealsAgg)) {
+      if (usedSealsKeys.has(sk)) continue;
+      const [sRef, sTicker] = sk.split('|');
+      if (sTicker !== ticker) continue;
+      if (sRef === vRef || sRef.startsWith(vRef) || vRef.startsWith(sRef) ||
+          vRef.split(/\s+/).filter(w=>w.length>3).some(w => sRef.includes(w))) {
+        sealsMatch = { key: sk, g: sg };
+        usedSealsKeys.add(sk);
+        break;
+      }
+    }
+
+    const s = sealsMatch ? sealsMatch.g : { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null };
+    const bqOk = qtyMatch(vg.buy_qty, s.buy_qty);
+    const sqOk = qtyMatch(vg.sell_qty, s.sell_qty);
+    const baOk = avgClose(vg.buy_avg, s.buy_avg);
+    const saOk = avgClose(vg.sell_avg, s.sell_avg);
+    const allOk = bqOk && sqOk && baOk && saOk;
+
+    if (!sealsMatch) orp++;
+    else if (allOk) ok++;
+    else err++;
+
+    const flags = [];
+    if (!bqOk) flags.push(`BUY QTY V:${vg.buy_qty||0} S:${s.buy_qty||0}`);
+    if (!sqOk) flags.push(`SELL QTY V:${vg.sell_qty||0} S:${s.sell_qty||0}`);
+    if (!baOk) flags.push(`BUY AVG V:${fmtAvg(vg.buy_avg)} S:${fmtAvg(s.buy_avg)}`);
+    if (!saOk) flags.push(`SELL AVG V:${fmtAvg(vg.sell_avg)} S:${fmtAvg(s.sell_avg)}`);
+
+    rows.push({ vg, sg: sealsMatch ? sealsMatch.g : null,
+      vRef, ticker: ticker.toUpperCase(), resolvedAs: vg.resolvedAs,
+      sealsClientCol: sealsMatch ? sealsMatch.g.sealsRef : '— NON TROUVÉ',
+      bqOk, sqOk, baOk, saOk, allOk, flags });
+  }
+
+  // Orphan SEALS (in SEALS but no matching VCON)
+  for (const [sk, sg] of Object.entries(sealsAgg)) {
+    if (!usedSealsKeys.has(sk)) {
+      orp++;
+      const [sRef, ticker] = sk.split('|');
+      rows.push({ vg: null, sg, vRef: '', ticker: ticker.toUpperCase(),
+        resolvedAs: '', sealsClientCol: sRef,
+        bqOk:false, sqOk:false, baOk:false, saOk:false, allOk:false,
+        flags: ['⚠ AUCUN VCON CORRESPONDANT'], orphanSeals: true });
+    }
+  }
+
+  // ── 4. Render ─────────────────────────────────────────────────────────────
+  document.getElementById('global-summary').innerHTML = `
+    <div class="summary-stat">VCON: <span class="val" style="color:var(--text)">${vcons.length}</span></div>
+    <div class="summary-stat">SEALS: <span class="val" style="color:var(--text)">${sealsTrades.length}</span></div>
+    <div class="summary-stat">✓ OK: <span class="val" style="color:var(--green)">${ok}</span></div>
+    <div class="summary-stat">✗ ÉCARTS: <span class="val" style="color:var(--red)">${err}</span></div>
+    <div class="summary-stat">⚠ ORPHELINS: <span class="val" style="color:var(--amber)">${orp}</span></div>
+    <div class="summary-stat">⊘ VCON=No ignorés: <span class="val" style="color:var(--dim)">${skippedNo}</span></div>
+    <div class="sublabel" style="margin-top:6px;color:var(--dim)">Agrégé par compte SEALS + produit · DealerNotes actif · VCON=No ignorés</div>
+  `;
+
+  let html = `<table><thead><tr>
+    <th>COMPTE SEALS (FICHIER)</th>
+    <th>VCON TRADER</th>
+    <th>PRODUIT</th>
+    <th style="color:var(--blue)">VCON BUY</th><th style="color:var(--blue)">VCON B.AVG</th>
+    <th style="color:var(--red)">VCON SELL</th><th style="color:var(--red)">VCON S.AVG</th>
+    <th style="color:var(--blue)">SEALS BUY</th><th style="color:var(--blue)">SEALS B.AVG</th>
+    <th style="color:var(--red)">SEALS SELL</th><th style="color:var(--red)">SEALS S.AVG</th>
+    <th>STATUT</th>
+  </tr></thead><tbody>`;
+
+  for (const r of rows) {
+    const v = r.vg || { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null };
+    const s = r.sg || { buy_qty:0, sell_qty:0, buy_avg:null, sell_avg:null };
+    const sealsColStyle = r.sealsClientCol === '— NON TROUVÉ' ? 'color:var(--red)' : 'color:var(--amber);font-size:10px';
+
+    const badge = r.orphanSeals
+      ? '<span class="badge badge-warn">⚠ SEALS SEUL</span>'
+      : !r.sg
+        ? '<span class="badge badge-warn">⚠ VCON SEUL</span>'
+        : r.allOk
+          ? '<span class="badge badge-ok">✓ OK</span>'
+          : `<span class="badge badge-err">✗ ÉCART</span>${r.flags.length ? '<div style="color:var(--red);font-size:10px;margin-top:3px">' + r.flags.join('<br>') + '</div>' : ''}`;
+
+    html += `<tr>
+      <td style="${sealsColStyle};max-width:220px;word-break:break-all">${r.sealsClientCol}</td>
+      <td style="color:var(--blue);font-size:10px">${r.resolvedAs||'—'}</td>
+      <td style="font-weight:bold;color:var(--text)">${r.ticker}</td>
+      <td class="${r.bqOk?'ok':'err'}">${v.buy_qty||'—'}</td>
+      <td class="${r.baOk?'ok':'err'}">${fmtAvg(v.buy_avg)}</td>
+      <td class="${r.sqOk?'ok':'err'}">${v.sell_qty||'—'}</td>
+      <td class="${r.saOk?'ok':'err'}">${fmtAvg(v.sell_avg)}</td>
+      <td class="${r.bqOk?'ok':'err'}">${s.buy_qty||'—'}</td>
+      <td class="${r.baOk?'ok':'err'}">${fmtAvg(s.buy_avg)}</td>
+      <td class="${r.sqOk?'ok':'err'}">${s.sell_qty||'—'}</td>
+      <td class="${r.saOk?'ok':'err'}">${fmtAvg(s.sell_avg)}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('global-detail').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+let parsedChat = {};      // { accountName: [tradeObj] }
+let mappingsVCON  = {};   // { chatAccount: vconRecipient }
+let mappingsSEALS = {};   // { chatAccount: sealsGiveupRef }
+let lastAllDay = '';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CLIENT DATABASE (from Anco client list)
+// vcon: 'Yes' | 'No' | 'Yes MSF' | 'EMSX' | ''
+// ═══════════════════════════════════════════════════════════════════════════════
+const CLIENT_DB = [
+  {entity:'BAML',category:'Equity',trader:'Fabrice Vegetti',vcon:'Yes',seals:'MSD ANCO ML FAB',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Fabrice Vegetti',vcon:'Yes',seals:'MSD ANCO ML FAB FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Jay Vallabhrama',vcon:'Yes',seals:'MSD ANCO ML JAY EQ 96Y99N13',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Jay Vallabhrama',vcon:'Yes',seals:'MSD ANCO ML ARTA FI',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Nikita Goldin',vcon:'Yes',seals:'MSD ANCO ML NIKITA FI K50',notes:'K50 Is default for FI'},
+  {entity:'BAML',category:'Equity',trader:'Nikita Goldin',vcon:'Yes',seals:'MSD ANCO ML NIKITA 96Y99J16',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Charles Sellam',vcon:'Yes',seals:'MSD ANCO ML CHARLES 96Y99M43',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Ekaterina Nikolaeva',vcon:'Yes',seals:'MSD ANCO ML EKAT FI',notes:''},
+  {entity:'BAML',category:'Rates US',trader:'Robert Dalmeida',vcon:'Yes',seals:'KBL ANCO ML DALMEIDA US 7HA99248',notes:''},
+  {entity:'BAML',category:'Rates EU',trader:'Robert Dalmeida',vcon:'Yes',seals:'MSD ANCO ML DALMEIDA EUREX FI',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Sidi Shatku',vcon:'Yes',seals:'MSD ANCO ML SIDI FI',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Stephen Gent',vcon:'Yes',seals:'MSD ANCO ML STEPHEN FI',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Tim Magdich',vcon:'Yes',seals:'MSD ANCO ML TIM FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Sarah Kouch',vcon:'Yes',seals:'MSD ANCO ML SARAH EQ 10M99218',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Sarah Kouch',vcon:'Yes',seals:'MSD ANCO ML SARAH FI',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Rich Nunn',vcon:'Yes',seals:'MSD ANCO ML RICH FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Rich Nunn',vcon:'Yes',seals:'MSD ANCO ML RICH EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Victor Parry',vcon:'Yes',seals:'MSD ANCO ML VICTOR FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Victor Parry',vcon:'Yes',seals:'MSD ANCO ML VICTOR EQ',notes:''},
+  {entity:'BAML',category:'Equity Fins',trader:'Victor Parry',vcon:'Yes',seals:'MSD ANCO ML VIC FINS EQ',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Philipp Wegner',vcon:'Yes',seals:'MSD ANCO ML PHIL EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Philipp Wegner',vcon:'Yes',seals:'MSD ANCO ML PHIL FI 96Y99K97',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Andy Lally',vcon:'Yes',seals:'MSD ANCO ML ANDY FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Andy Lally',vcon:'Yes',seals:'MSD ANCO ML ANDY EQ',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Bill Kosmetatos',vcon:'Yes',seals:'MSD ANCO ML BILL EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Bill Kosmetatos',vcon:'Yes',seals:'MSD ANCO ML BILL 96Y99L16 FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'CHRISTOPH  Poth',vcon:'Yes',seals:'MSD ANCO ML POTH EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'CHRISTOPH  Poth',vcon:'Yes',seals:'MSD ANCO ML POTH FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Diana Cabrini',vcon:'Yes',seals:'MSD ANCO ML DIANA EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Diana Cabrini',vcon:'Yes',seals:'MSD ANCO ML DIANA FI',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Josh Collins',vcon:'Yes',seals:'MSD ANCO ML JOSH FI',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Josh Collins',vcon:'Yes',seals:'MSD ANCO ML JOSH EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Matias Nuin',vcon:'Yes',seals:'MSD ANCO ML MATIAS FI IG CORP',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Matias Nuin',vcon:'Yes',seals:'MSD ANCO ML MATIAS FI NEWFINS',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Matias Nuin',vcon:'Yes',seals:'MSD ANCO ML MATIAS FI OLDFINS',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Matias Nuin',vcon:'Yes',seals:'MSD ANCO ML MATIAS EQ',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Robert Laux',vcon:'Yes',seals:'MSD ANCO ML LAUX EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Vincent Scassia',vcon:'Yes',seals:'MSD ANCO ML SCACCIA FI 10M99335',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Vincent Scassia',vcon:'Yes',seals:'MSD ANCO ML SCACCIA EQ 10M99332',notes:''},
+  {entity:'BAML',category:'Equity',trader:'Emanuele Erba',vcon:'Yes',seals:'MSD ANCO ML ERBA EQ',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Emanuele Erba',vcon:'Yes',seals:'MSD ANCO ML ERBA FI 10M99240',notes:''},
+  {entity:'BAML',category:'Rates',trader:'Ghita Chemiaa',vcon:'Yes',seals:'KBL ANCO ML GARY FI 96Y99Q71',notes:''},
+  {entity:'Brevan',category:'Equity',trader:'Shrut Karla',vcon:'Yes',seals:'MSD ANCO BREVAN SHRUT CITI 2E2A91',notes:''},
+  {entity:'Brevan',category:'Rates',trader:'Shrut Karla',vcon:'Yes',seals:'MSD ANCO BREVAN SHRUT JPM 70798',notes:''},
+  {entity:'CITI',category:'Rates',trader:'Alexis Serrero',vcon:'Yes',seals:'KBL ANCO 65HFUT2',notes:'not required to report Rates position on chat'},
+  {entity:'CITI',category:'Rates',trader:'Ivo Dimitrov',vcon:'Yes',seals:'KBL ANCO 99HFUT JAMES',notes:''},
+  {entity:'CITI',category:'Rates',trader:'Markus Faessler',vcon:'Yes',seals:'KBL ANCO MARKUS FI',notes:'book FUT2SP names as Markus Fi on Seals'},
+  {entity:'CITI',category:'Rates',trader:'Max Robertson',vcon:'Yes',seals:'KBL ANCO DOVFUT',notes:''},
+  {entity:'CITI',category:'Equity',trader:'Alexis Serrero',vcon:'No',seals:'KBL ANCO EQFUT65H',notes:''},
+  {entity:'CITI',category:'Equity',trader:'Max Robertson',vcon:'No',seals:'KBL ANCO EQOPT2SP',notes:'EQOPT2SP  Default book for Max Rob'},
+  {entity:'CITI',category:'Equity',trader:'Ivo Dimitrov',vcon:'No',seals:'KBL ANCO EQFUT2SP',notes:''},
+  {entity:'CITI',category:'Rates',trader:'Jonathan Abadou',vcon:'Yes',seals:'KBL ANCO JONATHAN FI',notes:''},
+  {entity:'CITI',category:'Rates',trader:'Jack Chapman',vcon:'Yes',seals:'KBL ANCO JACK FI',notes:''},
+  {entity:'CITI',category:'Equity',trader:'Jonathan Abadou',vcon:'No',seals:'KBL ANCO EQFUTL2W',notes:''},
+  {entity:'CITI',category:'Equity',trader:'Jack Chapman',vcon:'No',seals:'KBL ANCO CITI EQFUT8BW',notes:''},
+  {entity:'CITI',category:'Rates',trader:'Chris Lambeth',vcon:'Yes',seals:'KBL ANCO CITI CHRIS FI',notes:''},
+  {entity:'CITI',category:'Equity',trader:'Chris Lambeth',vcon:'No',seals:'KBL ANCO CITI CHRIS EQ HYMEQO',notes:''},
+  {entity:'CITI',category:'Rates',trader:'Tharsh Tharshan',vcon:'Yes',seals:'KBL ANCO CITI THARSH FI',notes:'Eq orders booked on Citi Chris EQ'},
+  {entity:'HSBC',category:'Rates',trader:'Yonathan Tchenio',vcon:'Yes',seals:'KBL ANCO HSBC YONATHAN CCFER HPX418',notes:'418 by default'},
+  {entity:'HSBC',category:'Rates',trader:'Yonathan Tchenio',vcon:'Yes',seals:'KBL ANCO HSBC YONATHAN CCFER HPX555',notes:'555 only when specified'},
+  {entity:'HSBC',category:'Rates',trader:'Yoni Saadoun',vcon:'Yes',seals:'KBL ANCO HSBC YONI CHFCORP',notes:'confirm book always'},
+  {entity:'HSBC',category:'Rates',trader:'Yoni Saadoun',vcon:'Yes',seals:'KBL ANCO HSBC YONI HLLSNR FINSNR',notes:'confirm book always'},
+  {entity:'HSBC',category:'Rates',trader:'Yaniv Ohana',vcon:'Yes',seals:'KBL ANCO HSBC YANIV HLLESR',notes:''},
+  {entity:'HSBC',category:'Rates',trader:'Rob',vcon:'Yes',seals:'KBL ANCO HSBC ROB HPX517',notes:''},
+  {entity:'HSBC',category:'Rates',trader:'Daniel',vcon:'Yes',seals:'KBL ANCO HSBC DANIEL HLLOCI',notes:''},
+  {entity:'Barclays',category:'Equity',trader:'Jaime Lavilla',vcon:'No',seals:'MSD ANCO BARC 21105',notes:''},
+  {entity:'Barclays',category:'Equity',trader:'Emily Killip',vcon:'No',seals:'MSD ANCO BARC 26950',notes:''},
+  {entity:'MS',category:'Equity',trader:'Alex Carr',vcon:'No',seals:'MSD ANCO MS 07500GYM0',notes:''},
+  {entity:'MS',category:'Equity',trader:'Jami Quraishi',vcon:'No',seals:'MSD ANCO MS 07500JMX',notes:''},
+  {entity:'MS',category:'Equity',trader:'Maxime Colombani',vcon:'No',seals:'MSD ANCO MS 0770AB00',notes:''},
+  {entity:'MS',category:'Equity',trader:'Nic Stoner',vcon:'No',seals:'MSD ANCO MS 07700H71',notes:'average trades EOD for booking'},
+  {entity:'MS',category:'Equity',trader:'James Bailey',vcon:'No',seals:'MSD ANCO MS 07900AJ1',notes:'books every trade seperately hence avg every trade'},
+  {entity:'MS',category:'Rates',trader:'James Bailey',vcon:'Yes',seals:'MSD ANCO MS 075001V95',notes:''},
+  {entity:'DB',category:'Equity',trader:'Niklas Schaefer',vcon:'Yes',seals:'KBL ANCO DB NIKLAS 1MAIL LHS93262',notes:''},
+  {entity:'DB',category:'Equity',trader:'Niklas Schaefer',vcon:'Yes',seals:'KBL ANCO DB NIKLAS 1VCON LHS99401',notes:''},
+  {entity:'DB',category:'Equity',trader:'Niklas Schaefer',vcon:'Yes',seals:'KBL ANCO DB NIKLAS 2VCON LHS90168',notes:''},
+  {entity:'DB',category:'Equity',trader:'Vidur Goel',vcon:'Yes',seals:'KBL ANCO DB VIDUR EQ LHS94531',notes:''},
+  {entity:'DB',category:'Rates',trader:'Vidur Goel',vcon:'Yes',seals:'KBL ANCO DB VIDUR FI LHS99804',notes:''},
+  {entity:'DB',category:'Equity',trader:'Christopher Mueller',vcon:'No',seals:'KBL ANCO DB VIDUR EQ LHS94531',notes:''},
+  {entity:'DB',category:'Rates',trader:'Christopher Mueller',vcon:'Yes',seals:'KBL ANCO DB VIDUR FI LHS99804',notes:''},
+  {entity:'DB',category:'Equity',trader:'Georgios Gkotsis',vcon:'No',seals:'KBL ANCO DB VISHNU NEW EQ LHS94529',notes:''},
+  {entity:'DB',category:'Rates',trader:'Georgios Gkotsis',vcon:'Yes',seals:'KBL ANCO DB LHS94123',notes:''},
+  {entity:'DB',category:'Equity',trader:'Georgios Gkotsis (Management book)',vcon:'No',seals:'KBL ANCO DB VISHNU NEW EQ LHS94529',notes:''},
+  {entity:'DB',category:'Equity',trader:'Mohit Grover',vcon:'No',seals:'KBL ANCO DB MOHIT EQ LHS94125',notes:''},
+  {entity:'DB',category:'Equity',trader:'Florian Bringard',vcon:'No',seals:'KBL ANCO DB FLORIAN EQ LHS93261',notes:''},
+  {entity:'DB',category:'Rates',trader:'Florian Bringard',vcon:'Yes',seals:'KBL ANCO FLORIAN FI',notes:''},
+  {entity:'DB',category:'Rates',trader:'Antonio Gomez',vcon:'Yes',seals:'KBL ANCO DB ANTONIO FI LHS99597',notes:''},
+  {entity:'DB',category:'Rates',trader:'Fabrice Haffner',vcon:'Yes',seals:'KBL ANCO DB HAFFNER 99813 FINS',notes:''},
+  {entity:'DB',category:'Rates',trader:'Fabrice Haffner',vcon:'Yes',seals:'KBL ANCO DB HAFFNER 99812 CORPS',notes:''},
+  {entity:'DB',category:'Rates',trader:'Alissa Xiochen Ren',vcon:'Yes',seals:'KBL ANCO DB ALISSA FI LHS99599',notes:''},
+  {entity:'DB',category:'Rates',trader:'Vaibhav',vcon:'Yes',seals:'KBL ANCO VAIBHAV FI FHS91V21',notes:''},
+  {entity:'DB',category:'Rates',trader:'Mengxiao Liu',vcon:'Yes',seals:'KBL ANCO MENGXIAO FI LHS99808E',notes:''},
+  {entity:'DB',category:'Equity',trader:'Mengxiao Liu',vcon:'No',seals:'KBL ANCO DB MENGXIAO EQ LHS90018',notes:''},
+  {entity:'DB',category:'Rates',trader:'Giuseppe Stumpo',vcon:'Yes',seals:'KBL ANCO DB GIUSEP FI LHS94137',notes:''},
+  {entity:'DB',category:'Equity',trader:'Raphael Gempp',vcon:'No',seals:'KBL ANCO DB LHS90180',notes:'LHS90180 to be used as default'},
+  {entity:'DB',category:'Rates',trader:'Andrew Penny',vcon:'Yes',seals:'KBL ANCO LHS99615',notes:''},
+  {entity:'Centiva',category:'Equity',trader:'Tosin Buraimo',vcon:'Yes',seals:'MSD ANCO CENTIVA EUREX OPT TOSIN NEW',notes:'only EUREX OPTIONS'},
+  {entity:'Centiva',category:'All',trader:'Tosin Buraimo',vcon:'Yes',seals:'MSD ANCO CENTIVA TOSIN NEW',notes:''},
+  {entity:'Centiva',category:'All',trader:'Daniel Mcnally',vcon:'Yes',seals:'MSD ANCO CENTIVA DAN ALL',notes:''},
+  {entity:'Exodus',category:'All',trader:'Kerem Cirpan',vcon:'Yes',seals:'MSD ANCO EXODUS KEREM',notes:''},
+  {entity:'CACIB',category:'Rates',trader:'Julien Serror',vcon:'No',seals:'KBL ANCO CACIB SERROR CROSS M070',notes:''},
+  {entity:'CACIB',category:'Rates',trader:'Philippe Bonnafoux',vcon:'No',seals:'KBL ANCO CACIB SERROR SWAPS M016',notes:''},
+  {entity:'CACIB',category:'Rates',trader:'Michael Benguigui',vcon:'No',seals:'KBL ANCO CACIB SERROR M631',notes:''},
+  {entity:'ABN',category:'Rates',trader:'Stuart Marshall',vcon:'Yes',seals:'KBL ANCO ABN STU 00NEDF',notes:''},
+  {entity:'ABN',category:'Rates',trader:'Stuart Marshall',vcon:'Yes',seals:'KBL ANCO ABN STU BCOREF',notes:''},
+  {entity:'Capstone',category:'Equity',trader:'Pierre Fulhaber',vcon:'No',seals:'MSD ANCO CAPSTONE PIERRE FI L95612',notes:''},
+  {entity:'Symmetry',category:'Rates',trader:'Lucas Krief',vcon:'Yes MSF',seals:'',notes:'140 in LFIS30072 & 15 in LFIS30174'},
+  {entity:'Symmetry',category:'Equity',trader:'Philip Heurich',vcon:'Yes',seals:'',notes:'Alloc as sent by client'},
+  {entity:'Funds Avenue',category:'Equity',trader:'Nicolas Hamar',vcon:'No',seals:'KBL ANCO FUCHS LUX',notes:''},
+  {entity:'GLG (Man)',category:'Equity',trader:'Benjamin Bouillon',vcon:'EMSX',seals:'',notes:'Alloc sent by MO'},
+  {entity:'GLG (Man)',category:'Rates',trader:'Benoit Genevier',vcon:'EMSX',seals:'',notes:'Alloc sent by MO'},
+  {entity:'VERITION',category:'Equity',trader:'Achilleas Stamos',vcon:'Yes',seals:'MSD ANCO VERITION ACHILLEAS ML 6C020181',notes:''},
+  {entity:'VERITION',category:'Equity',trader:'Gabriel Roberts',vcon:'Yes',seals:'MSD ANCO VERITION GAB ML 6C020181',notes:''},
+  {entity:'H2O',category:'Equity',trader:'Andrew Egan',vcon:'Yes',seals:'',notes:'Alloc sent by client on BBG VCON'},
+  {entity:'SCHONFIELD',category:'Equity',trader:'LEYTI  DIENG-SARKISSIAN',vcon:'Yes',seals:'KBL ANCO SCHONFELD STRI',notes:''},
+  {entity:'Capula',category:'Equity',trader:'Greg Nataf',vcon:'Yes',seals:'',notes:'Alloc splits sent by DSE'},
+
+  // ── CHAT ALIASES ─────────────────────────────────────────────────────────
+  {entity:'BAML',category:'Equity',trader:'Jay',vcon:'Yes',seals:'MSD ANCO ML JAY EQ 96Y99N13',notes:'Alias: Jayant Vallabhrama Equity'},
+  {entity:'BAML',category:'Rates',trader:'Arta',vcon:'Yes',seals:'MSD ANCO ML ARTA FI',notes:'Alias: Jayant Vallabhrama Rates'},
+  {entity:'BAML',category:'Rates',trader:'Ekat',vcon:'Yes',seals:'MSD ANCO ML EKAT FI',notes:'Alias: Ekaterina Nikolaeva'},
+  {entity:'BAML',category:'Rates',trader:'Nikita',vcon:'Yes',seals:'MSD ANCO ML NIKITA FI K50',notes:'Alias: Nikita Goldin'},
+  {entity:'MS',category:'Equity',trader:'Nic',vcon:'No',seals:'MSD ANCO MS 07700H71',notes:'Alias: Nic Stoner'},
+  {entity:'Fuchs',category:'Equity',trader:'Nicolas',vcon:'No',seals:'KBL ANCO FUCHS LUX',notes:'Alias: Nicolas Hamar'},
+  {entity:'CITI',category:'Equity',trader:'Jonathan',vcon:'No',seals:'KBL ANCO EQFUTL2W',notes:'Alias: Jonathan Abadou Equity'},
+  {entity:'DB',category:'Equity',trader:'GG',vcon:'No',seals:'KBL ANCO DB VISHNU NEW EQ LHS94529',notes:'Alias: Georgios Gkotsis'},
+  {entity:'DB',category:'Equity',trader:'Mohit',vcon:'No',seals:'KBL ANCO DB MOHIT EQ LHS94125',notes:'Alias: Mohit Grover'},
+  {entity:'DB',category:'Equity',trader:'Florian',vcon:'No',seals:'KBL ANCO DB FLORIAN EQ LHS93261',notes:'Alias: Florian Bringard Equity'},
+  {entity:'Centiva',category:'Eqy & FI',trader:'Tosin',vcon:'Yes',seals:'MSD ANCO CENTIVA TOSIN NEW',notes:'Alias: Tosin Buraimo'},
+  {entity:'BAML',category:'Rates',trader:'Charles',vcon:'Yes',seals:'MSD ANCO ML CHARLES 96Y99M43',notes:'Alias: Charles Sellam'},
+  {entity:'MS',category:'Equity',trader:'James',vcon:'No',seals:'MSD ANCO MS 07900AJ1',notes:'Alias: James Bailey'},
+  {entity:'DB',category:'Rates',trader:'Andrew',vcon:'Yes',seals:'KBL ANCO LHS99615',notes:'Alias: Andrew Penney'},
+];
+
+// Per-account mapping: { vconRecipient, sealsRef, clientIdx, vconOverride }
+let accountMappings = {}; // { chatAccount: { clientIdx, vconRecipient, sealsRef, vconOverride } }
+
+function getClientForAccount(account) {
+  const m = accountMappings[account];
+  if (!m || m.clientIdx === undefined || m.clientIdx < 0) return null;
+  return CLIENT_DB[m.clientIdx] || null;
+}
+
+function vconRequiredForAccount(account) {
+  const m = accountMappings[account];
+  if (m && m.vconOverride !== undefined && m.vconOverride !== '') return m.vconOverride;
+  const c = getClientForAccount(account);
+  if (!c) return 'unknown';
+  return c.vcon; // 'Yes', 'No', 'Yes MSF', 'EMSX', ''
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VCON PARSER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function parseVCONScreenCopy(raw) {
+  // Handles Bloomberg VCON screen-copy format:
+  // "1.	S	50 c	VGM6	5539	JAYANT VALLABH…	09:59:16	Confir…	MERRILL…	EUR	ANTHONY COHEN…	 	04/02/26	..."
+  const lines = raw.trim().split('\n');
+  const trades = [];
+  let row = 0;
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    // Must start with a number followed by dot (1. 2. etc.)
+    if (!/^\d+\./.test(t)) continue;
+    // Remove leading "1.	"
+    const cols = t.replace(/^\d+\.\s*/, '').split('\t');
+    if (cols.length < 6) continue;
+    const bs        = cols[0]?.trim();  // S or B
+    const amtStr    = cols[1]?.trim();  // "50 c"
+    const security  = cols[2]?.trim();  // "VGM6" or "DUM6" etc.
+    const priceStr  = cols[3]?.trim();  // "5539.0000000"
+    const recipient = (cols[4]?.trim()||'').toUpperCase();
+    const tradeTime = cols[5]?.trim();  // "09:59:16"
+    const status    = cols[6]?.trim();  // "Confir…"
+    const firm      = cols[7]?.trim();  // "MERRILL…"
+    const ccy       = cols[8]?.trim();
+    const sender    = cols[9]?.trim();
+    const notes     = (cols[10]?.trim()||'').toUpperCase();
+    const tradeDate = cols[11]?.trim();
+    // Use Security column (cols[2]) — full ticker incl. strike
+    // cols[13] is the truncated "Tick…" column — ignore it
+    const ticker    = security;
+
+    if (!bs || (bs !== 'S' && bs !== 'B')) continue;
+    const qty = parseQty(amtStr);
+    if (!qty) continue;
+
+    trades.push({
+      bs, qty,
+      security,
+      price: parseFloat(priceStr) || 0,
+      recipient,
+      notes,
+      ticker: ticker || security,
+      status,
+      tradeTime,
+      row: row++
+    });
+  }
+  return trades;
+}
+
+function parseVCONData(raw) {
+  const lines = raw.trim().split('\n').filter(l=>l.trim());
+  if (!lines.length) return [];
+
+  // Auto-detect format: if any line starts with "1." or "2." → screen-copy format
+  const isScreenCopy = lines.some(l => /^\d+\./.test(l.trim()));
+  if (isScreenCopy) return parseVCONScreenCopy(raw);
+
+  const header = lines[0].split('\t');
+  const idx = {};
+  header.forEach((h,i) => idx[h.trim()] = i);
+
+  const trades = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split('\t');
+    if (cols.length < 5) continue;
+    trades.push({
+      bs:        cols[idx['BS']]?.trim(),
+      qty:       parseQty(cols[idx['Amount']]?.trim()||'0'),
+      security:  cols[idx['Security']]?.trim(),
+      price:     parseFloat(cols[idx['PriceDiscount']])||0,
+      recipient: (cols[idx['Recipient']]?.trim()||'').toUpperCase(),
+      notes:     (cols[idx['DealerNotes']]?.trim()||'').toUpperCase(),
+      // Use Security for full ticker (Ticker col may be truncated)
+      ticker:    cols[idx['Security']]?.trim() || cols[idx['Ticker']]?.trim(),
+      status:    cols[idx['Status']]?.trim(),
+      tradeTime: cols[idx['TradeTime']]?.trim()||'',
+      row: i
+    });
+  }
+  return trades;
+}
+
+function resolveVCONRecipient(v) {
+  if (v.notes && v.notes.trim()) return v.notes.trim().toUpperCase();
+  return v.recipient.trim().toUpperCase();
+}
+// Permanent recipient aliases: VCONs sent to these names are treated as the mapped trader
+function resolveVCONClient(v) {
+  // 1. DealerNotes override (e.g. Ghita → GARY)
+  const notes = (v.notes || '').trim().toUpperCase().replace(/[…\.]+/g,'').trim();
+  if (notes) return notes;
+  // 2. Recipient name
+  const recip = resolveVCONRecipient(v);
+  // 3. Permanent alias mapping
+  const recipClean = recip.replace(/[…\.]+/g,'').trim();
+  for (const alias in VCON_RECIPIENT_ALIASES) {
+    if (recipClean.indexOf(alias) >= 0 || alias.indexOf(recipClean) >= 0) {
+      return VCON_RECIPIENT_ALIASES[alias];
+    }
+  }
+  return recip;
+}
+
+
+function getVCONMapping(account) {
+  const m = accountMappings[account];
+  if (m && m.vconRecipient) return m.vconRecipient.toUpperCase();
+  if (mappingsVCON[account]) return mappingsVCON[account].toUpperCase();
+  return null;
+}
+
+function findVCONTradesForAccount(account, vconByRecipient) {
+  const explicitKey = getVCONMapping(account);
+  if (explicitKey && vconByRecipient[explicitKey]) return vconByRecipient[explicitKey];
+  const accountWords = account.toUpperCase().split(/[\s_\-]+/).filter(w => w.length > 2);
+  for (const [recipKey, trades] of Object.entries(vconByRecipient)) {
+    const recipWords = recipKey.split(/[\s_\-]+/);
+    const match = accountWords.some(aw => recipWords.some(rw => rw.includes(aw) || aw.includes(rw)));
+    if (match) return trades;
+  }
+  const firstWord = account.split(/[\s_\-]+/)[0].toUpperCase();
+  if (vconByRecipient[firstWord]) return vconByRecipient[firstWord];
+  return [];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEALS → BBG TICKER MAP
+// ═══════════════════════════════════════════════════════════════════════════════
+// HISTORIQUE — localStorage cache
+// ═══════════════════════════════════════════════════════════════════════════════
+const HISTORY_KEY = 'trt_history';
+const MAX_HISTORY = 30; // max entries kept
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveHistory(entries) {
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(entries)); }
+  catch(e) { console.warn('localStorage full:', e); }
+}
+
+function addHistoryEntry(type, data) {
+  const entries = getHistory();
+  const entry = {
+    id: Date.now(),
+    type,           // 'chat', 'vcon', 'seals', 'global'
+    date: new Date().toLocaleString('fr-FR'),
+    data
+  };
+  entries.unshift(entry); // newest first
+  if (entries.length > MAX_HISTORY) entries.splice(MAX_HISTORY);
+  saveHistory(entries);
+}
+
+function saveCurrentChatParse() {
+  if (!Object.keys(parsedChat).length) return;
+  const accounts = {};
+  for (const [acc, trades] of Object.entries(parsedChat)) {
+    accounts[acc] = {
+      trades: trades.length,
+      products: [...new Set(trades.map(t => getShortTicker(t.ticker)))].join(', ')
+    };
+  }
+  addHistoryEntry('chat', {
+    allDay: lastAllDay,
+    accounts,
+    nTrades: Object.values(parsedChat).flat().length,
+    nAccounts: Object.keys(parsedChat).length
+  });
+}
+
+function saveVCONResult(totalOk, totalErr, totalWarn) {
+  addHistoryEntry('vcon', {
+    ok: totalOk, err: totalErr, warn: totalWarn,
+    accounts: Object.keys(parsedChat).join(', ')
+  });
+}
+
+function saveSEALSResult(totalOk, totalErr) {
+  addHistoryEntry('seals', {
+    ok: totalOk, err: totalErr,
+    accounts: Object.keys(parsedChat).join(', ')
+  });
+}
+
+function clearHistory() {
+  if (!confirm('Vider tout l\'historique ?')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+}
+
+function renderHistory() {
+  const entries = getHistory();
+  const container = document.getElementById('history-container');
+  const countEl   = document.getElementById('history-count');
+  if (!container) return;
+
+  countEl.textContent = entries.length + ' entrées';
+
+  if (!entries.length) {
+    container.innerHTML = '<div class="sublabel" style="color:var(--dim)">Aucun historique. Parsez un chat ou lancez un check pour commencer.</div>';
+    return;
+  }
+
+  const typeColors = { chat: 'var(--amber)', vcon: 'var(--blue)', seals: 'var(--green)', global: 'var(--purple)' };
+  const typeLabels = { chat: '① CHAT', vcon: '② VCON', seals: '③ SEALS', global: '⑤ GLOBAL' };
+
+  let html = '';
+  for (const e of entries) {
+    const color = typeColors[e.type] || 'var(--text)';
+    const label = typeLabels[e.type] || e.type.toUpperCase();
+
+    let detail = '';
+    if (e.type === 'chat') {
+      detail = `<div style="margin-top:6px;font-size:10px;color:var(--dim)">${e.data.nAccounts} comptes · ${e.data.nTrades} trades</div>`;
+      // Show accounts
+      for (const [acc, info] of Object.entries(e.data.accounts)) {
+        detail += `<div style="font-size:10px;color:var(--text);margin-left:8px">▸ <span style="color:var(--amber)">${acc}</span> — ${info.trades} trades · ${info.products}</div>`;
+      }
+      // Show ALL DAY recap in expandable
+      const escapedAllDay = (e.data.allDay || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      detail += `<details style="margin-top:6px"><summary style="font-size:10px;color:var(--dim);cursor:pointer">▶ ALL DAY RECAP</summary>
+        <pre style="font-family:var(--mono);font-size:10px;color:var(--text);margin-top:4px;white-space:pre;overflow-x:auto">${escapedAllDay}</pre>
+        <button class="btn btn-blue btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(e.data.allDay || '')})">⊡ COPIER</button>
+      </details>`;
+    } else if (e.type === 'vcon') {
+      detail = `<div style="font-size:10px;margin-top:4px"><span style="color:var(--green)">✓ ${e.data.ok} OK</span> · <span style="color:var(--red)">✗ ${e.data.err} ÉCARTS</span> · <span style="color:var(--amber)">⚠ ${e.data.warn} ORPHELINS</span></div>`;
+      detail += `<div style="font-size:10px;color:var(--dim)">${e.data.accounts}</div>`;
+    } else if (e.type === 'seals') {
+      detail = `<div style="font-size:10px;margin-top:4px"><span style="color:var(--green)">✓ ${e.data.ok} OK</span> · <span style="color:var(--red)">✗ ${e.data.err} ÉCARTS</span></div>`;
+      detail += `<div style="font-size:10px;color:var(--dim)">${e.data.accounts}</div>`;
+    }
+
+    html += `<div style="background:var(--bg2);border:1px solid var(--dim);border-left:3px solid ${color};padding:10px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="color:${color};font-size:10px;letter-spacing:2px;font-weight:bold">${label}</span>
+        <span style="color:var(--dim);font-size:10px">${e.date}</span>
+      </div>
+      ${detail}
+    </div>`;
+  }
+  container.innerHTML = html;
+}
+
+
+
+
+
+
+
+
+
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// VCON AVG — weighted average by trader + product
+// ════════════════════════════════════════════════════════════════════════════
+var vconavgData = []; // store rows for filtering
+
+function computeVCONAvg() {
+  var raw = document.getElementById('vconavg-input').value;
+  if (!raw.trim()) { alert('Collez les données VCON.'); return; }
+
+  var vcons = parseVCONData(raw);
+  if (!vcons.length) { alert('Aucun VCON parsé — vérifiez le format (TSV).'); return; }
+
+  // Group by trader (resolveVCONClient) + normTicker → buy/sell agg
+  var groups = {}; // "TRADER|ticker" → { trader, ticker, buy/sell qty/sum/avg, trades[] }
+  for (var i = 0; i < vcons.length; i++) {
+    var v = vcons[i];
+    var trader = resolveVCONClient(v);
+    var rawTicker = (v.security && v.security.length > (v.ticker||'').length) ? v.security : (v.ticker || v.security || '');
+    var displayTicker = rawTicker.toUpperCase().trim();   // full Bloomberg security name
+    var normKey = normTickerForKey(rawTicker) || displayTicker;
+    if (!normKey) continue;
+    var key = trader.toUpperCase() + '|' + normKey;
+    if (!groups[key]) groups[key] = {
+      trader: trader, ticker: displayTicker,             // display = raw security
+      buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0,
+      buy_trades:[], sell_trades:[]
+    };
+    var g = groups[key];
+    var qty = v.qty, px = v.price;
+    // VCON S = we buy, VCON B = we sell
+    if (v.bs === 'S') {
+      g.buy_qty += qty; g.buy_sum += qty * px;
+      g.buy_trades.push(qty + ' @ ' + px);
+    } else {
+      g.sell_qty += qty; g.sell_sum += qty * px;
+      g.sell_trades.push(qty + ' @ ' + px);
+    }
+  }
+
+  // Compute averages
+  var rows = [];
+  var gkeys = Object.keys(groups).sort();
+  for (var i = 0; i < gkeys.length; i++) {
+    var g = groups[gkeys[i]];
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+    rows.push(g);
+  }
+  vconavgData = rows;
+
+  // Summary
+  var traders = {};
+  for (var i = 0; i < rows.length; i++) traders[rows[i].trader] = 1;
+  document.getElementById('vconavg-summary').innerHTML =
+    '<div class="summary-stat">TRADERS: <span class="val" style="color:var(--text)">' + Object.keys(traders).length + '</span></div>' +
+    '<div class="summary-stat">PRODUITS: <span class="val" style="color:var(--text)">' + rows.length + '</span></div>' +
+    '<div class="summary-stat">VCONS: <span class="val" style="color:var(--text)">' + vcons.length + '</span></div>';
+
+  renderVCONAvgTable(rows);
+}
+
+function renderVCONAvgTable(rows) {
+  if (!rows.length) {
+    document.getElementById('vconavg-detail').innerHTML = '<div class="sublabel" style="padding:12px">Aucune donnée.</div>';
+    return;
+  }
+
+  var html = '<table><thead><tr>' +
+    '<th style="min-width:160px;white-space:nowrap">TRADER</th>' +
+    '<th style="min-width:120px;white-space:nowrap">PRODUIT</th>' +
+    '<th style="color:var(--blue)">BUY QTY</th>' +
+    '<th style="color:var(--blue)">BUY AVG</th>' +
+    '<th style="color:var(--red)">SELL QTY</th>' +
+    '<th style="color:var(--red)">SELL AVG</th>' +
+    '<th style="color:var(--dim)">DÉTAIL BUY</th>' +
+    '<th style="color:var(--dim)">DÉTAIL SELL</th>' +
+    '</tr></thead><tbody>';
+
+  var lastTrader = '';
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var traderCell = r.trader !== lastTrader
+      ? '<td style="color:var(--amber);font-weight:bold;vertical-align:top" rowspan="1">' + r.trader + '</td>'
+      : '<td style="color:var(--dim);font-size:9px">&nbsp;</td>';
+    lastTrader = r.trader;
+
+    html += '<tr>' +
+      '<td style="color:var(--amber);font-weight:bold;white-space:nowrap;min-width:160px">' + r.trader + '</td>' +
+      '<td style="font-weight:bold;color:var(--text);white-space:nowrap;min-width:120px">' + (r.displayTicker||r.ticker) + '</td>' +
+      '<td class="ok">' + (r.buy_qty || '—') + '</td>' +
+      '<td class="ok">' + fmtAvg(r.buy_avg) + '</td>' +
+      '<td class="err">' + (r.sell_qty || '—') + '</td>' +
+      '<td class="err">' + fmtAvg(r.sell_avg) + '</td>' +
+      '<td style="color:var(--dim);font-size:10px">' + (r.buy_trades.length ? r.buy_trades.join(', ') : '—') + '</td>' +
+      '<td style="color:var(--dim);font-size:10px">' + (r.sell_trades.length ? r.sell_trades.join(', ') : '—') + '</td>' +
+      '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('vconavg-detail').innerHTML = html;
+}
+
+function filterVCONAvg() {
+  var raw = (document.getElementById('vconavg-filter').value || '').toUpperCase().trim();
+  // Split by spaces so "FAB RX" matches trader containing FAB AND ticker containing RX
+  var terms = raw.split(/\s+/).filter(function(t){ return t.length > 0; });
+  if (!terms.length) { renderVCONAvgTable(vconavgData); return; }
+  var filtered = vconavgData.filter(function(r) {
+    var trader = r.trader.toUpperCase();
+    var ticker = r.ticker.toUpperCase();
+    // Every term must match either trader or ticker
+    return terms.every(function(term) {
+      return trader.indexOf(term) >= 0 || ticker.indexOf(term) >= 0;
+    });
+  });
+  // Show count
+  var filterEl = document.getElementById('vconavg-filter');
+  filterEl.style.borderColor = filtered.length === 0 ? 'var(--red)' : filtered.length < vconavgData.length ? 'var(--blue)' : 'var(--dim)';
+  renderVCONAvgTable(filtered);
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// SEALS AVG — weighted average by client + product
+// ════════════════════════════════════════════════════════════════════════════
+var sealsavgData = [];
+
+function computeSEALSAvg() {
+  var raw = document.getElementById('sealsavg-input').value;
+  if (!raw.trim()) { alert('Collez les données SEALS.'); return; }
+  var trades = parseSEALSData(raw);
+  if (!trades.length) { alert('Aucune donnée SEALS parsée.'); return; }
+
+  // Group by client + displayTicker (BBG)
+  var groups = {};
+  for (var i = 0; i < trades.length; i++) {
+    var t = trades[i];
+    var client = (t.client || t.ref || 'UNKNOWN').trim();
+    var displayTicker = t.bbgTicker || t.prod;
+    var normKey = normTickerForKey(displayTicker);
+    var key = client.toUpperCase() + '|' + normKey;
+    if (!groups[key]) groups[key] = {
+      client: client, ticker: displayTicker,
+      buy_qty:0, sell_qty:0, buy_sum:0, sell_sum:0,
+      buy_trades:[], sell_trades:[]
+    };
+    var g = groups[key];
+    var qty = t.vol, px = t.unrPx;
+    if (t.bs === 'Buy') {
+      g.buy_qty += qty; g.buy_sum += qty * px;
+      g.buy_trades.push(qty + ' @ ' + px);
+    } else {
+      g.sell_qty += qty; g.sell_sum += qty * px;
+      g.sell_trades.push(qty + ' @ ' + px);
+    }
+  }
+
+  var rows = [];
+  var gkeys = Object.keys(groups).sort();
+  for (var i = 0; i < gkeys.length; i++) {
+    var g = groups[gkeys[i]];
+    g.buy_avg  = g.buy_qty  > 0 ? g.buy_sum  / g.buy_qty  : null;
+    g.sell_avg = g.sell_qty > 0 ? g.sell_sum / g.sell_qty : null;
+    rows.push(g);
+  }
+  sealsavgData = rows;
+
+  var clients = {};
+  for (var i = 0; i < rows.length; i++) clients[rows[i].client] = 1;
+  document.getElementById('sealsavg-summary').innerHTML =
+    '<div class="summary-stat">CLIENTS: <span class="val" style="color:var(--text)">' + Object.keys(clients).length + '</span></div>' +
+    '<div class="summary-stat">PRODUITS: <span class="val" style="color:var(--text)">' + rows.length + '</span></div>' +
+    '<div class="summary-stat">LIGNES SEALS: <span class="val" style="color:var(--text)">' + trades.length + '</span></div>';
+
+  renderSEALSAvgTable(rows);
+}
+
+function renderSEALSAvgTable(rows) {
+  if (!rows.length) {
+    document.getElementById('sealsavg-detail').innerHTML = '<div class="sublabel" style="padding:12px">Aucune donnée.</div>';
+    return;
+  }
+  var html = '<table><thead><tr>' +
+    '<th style="min-width:200px;white-space:nowrap">CLIENT</th>' +
+    '<th style="min-width:140px;white-space:nowrap">PRODUIT</th>' +
+    '<th style="color:var(--blue)">BUY QTY</th>' +
+    '<th style="color:var(--blue)">BUY AVG</th>' +
+    '<th style="color:var(--red)">SELL QTY</th>' +
+    '<th style="color:var(--red)">SELL AVG</th>' +
+    '<th style="color:var(--dim)">DÉTAIL BUY</th>' +
+    '<th style="color:var(--dim)">DÉTAIL SELL</th>' +
+    '</tr></thead><tbody>';
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    html += '<tr>' +
+      '<td style="color:var(--amber);font-weight:bold;white-space:nowrap">' + r.client + '</td>' +
+      '<td style="font-weight:bold;white-space:nowrap">' + r.ticker + '</td>' +
+      '<td class="ok">' + (r.buy_qty || '&mdash;') + '</td>' +
+      '<td class="ok">' + fmtAvg(r.buy_avg) + '</td>' +
+      '<td class="err">' + (r.sell_qty || '&mdash;') + '</td>' +
+      '<td class="err">' + fmtAvg(r.sell_avg) + '</td>' +
+      '<td style="color:var(--dim);font-size:10px">' + (r.buy_trades.length ? r.buy_trades.join(', ') : '&mdash;') + '</td>' +
+      '<td style="color:var(--dim);font-size:10px">' + (r.sell_trades.length ? r.sell_trades.join(', ') : '&mdash;') + '</td>' +
+      '</tr>';
+  }
+  html += '</tbody></table>';
+  document.getElementById('sealsavg-detail').innerHTML = html;
+}
+
+function filterSEALSAvg() {
+  var raw = (document.getElementById('sealsavg-filter').value || '').toUpperCase().trim();
+  var terms = raw.split(/\s+/).filter(function(t){ return t.length > 0; });
+  var filterEl = document.getElementById('sealsavg-filter');
+  if (!terms.length) { filterEl.style.borderColor='var(--dim)'; renderSEALSAvgTable(sealsavgData); return; }
+  var filtered = sealsavgData.filter(function(r) {
+    var client = r.client.toUpperCase();
+    var ticker = r.ticker.toUpperCase();
+    return terms.every(function(term) {
+      return client.indexOf(term) >= 0 || ticker.indexOf(term) >= 0;
+    });
+  });
+  filterEl.style.borderColor = filtered.length === 0 ? 'var(--red)' : 'var(--blue)';
+  renderSEALSAvgTable(filtered);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// COPY WITH COLORS — copies colored HTML to clipboard so it pastes with colors
+// in apps that support rich text (Outlook, Word, Bloomberg IB)
+// ════════════════════════════════════════════════════════════════════════════
+function copyOutput() {
+  // Build plain text for fallback
+  const plain = lastAllDay;
+  // Build colored HTML
+  const colored = colorizeOutputForCopy(lastAllDay);
+  try {
+    const blob = new Blob([colored], { type: 'text/html' });
+    const blobPlain = new Blob([plain], { type: 'text/plain' });
+    const item = new ClipboardItem({ 'text/html': blob, 'text/plain': blobPlain });
+    navigator.clipboard.write([item]).then(function() {
+      flashBtn('\u2713 COPIÉ');
+    }).catch(function() { fallbackCopy(plain); });
+  } catch(e) { fallbackCopy(plain); }
+}
+
+function flashBtn(msg) {
+  var btn = document.querySelector('[onclick="copyOutput()"]');
+  if (!btn) return;
+  var old = btn.textContent;
+  btn.textContent = msg;
+  btn.classList.add('flash');
+  setTimeout(function(){ btn.textContent = old; btn.classList.remove('flash'); }, 1500);
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta);
+  ta.select(); document.execCommand('copy');
+  document.body.removeChild(ta);
+  flashBtn('\u2713 COPIÉ');
+}
+
+function colorizeOutputForCopy(text) {
+  // Email/Outlook compatible: no background, inline styles, <div> rows
+  // Colors chosen for readability on white background
+  const lines = text.split('\n');
+  const parts = lines.map(function(line) {
+    var esc = line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var style = 'font-family:Courier New,monospace;font-size:11pt;line-height:1.5;';
+    if (/^\{P8\}/.test(line)) {
+      style += 'color:#6600cc;font-weight:bold;';
+    } else if (/^----/.test(line)) {
+      style += 'color:#cc7700;font-weight:bold;';
+    } else if (/^\{P2\}/.test(line) || /^\*\*\{P2\}/.test(line)) {
+      style += 'color:#007744;';
+    } else if (/^\{P4\}/.test(line)) {
+      style += 'color:#cc0022;';
+    } else if (/^[A-Z]/.test(line) && /[+\-]\d/.test(line)) {
+      style += 'color:#0055aa;font-weight:bold;';
+    } else {
+      style += 'color:#222222;';
+    }
+    return '<div style="' + style + '">' + (esc || '&nbsp;') + '</div>';
+  });
+  return '<html><body>' + parts.join('') + '</body></html>';
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// EXPORT / IMPORT — sauvegarde toutes les données localStorage en JSON
+// ════════════════════════════════════════════════════════════════════════════
+function exportData() {
+  var data = {};
+  // Export all localStorage keys belonging to TRT
+  for (var i = 0; i < localStorage.length; i++) {
+    var key = localStorage.key(i);
+    data[key] = localStorage.getItem(key);
+  }
+  // Also export in-memory state
+  data['_export_meta'] = JSON.stringify({
+    date: new Date().toISOString(),
+    version: 'TRT v1.0',
+    accounts: Object.keys(parsedChat).length,
+    mappings: Object.keys(accountMappings).length
+  });
+
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = 'TRT_backup_' + dateStr + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Flash feedback
+  var btn = document.querySelector('[onclick="exportData()"]');
+  if (btn) {
+    var old = btn.textContent;
+    btn.textContent = '✓ EXPORTÉ';
+    setTimeout(function(){ btn.textContent = old; }, 2000);
+  }
+}
+
+function importData(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      var count = 0;
+      for (var key in data) {
+        if (key === '_export_meta') continue;
+        localStorage.setItem(key, data[key]);
+        count++;
+      }
+      // Reload page to apply restored state
+      var meta = data['_export_meta'] ? JSON.parse(data['_export_meta']) : {};
+      var msg = 'Import réussi : ' + count + ' entrées restaurées.';
+      if (meta.date) msg += '\nBackup du : ' + meta.date.slice(0,10);
+      msg += '\n\nLa page va se recharger pour appliquer les données.';
+      alert(msg);
+      location.reload();
+    } catch(err) {
+      alert('Erreur import : ' + err.message + '\nVérifiez que le fichier est un backup TRT valide.');
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be re-imported if needed
+  event.target.value = '';
+}
+
+</script>
+</body>
+</html>
